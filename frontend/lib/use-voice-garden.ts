@@ -3,29 +3,48 @@
 /**
  * The voice-editing pipeline, shared by the planner panel and the AR overlay.
  *
- * Audio -> transcript -> validated commands -> crop selection -> the ordinary
- * layout call. Extracted from the planner's panel so the AR view drives the
- * identical path: there is one place that decides what "remove the kale"
- * means, and both surfaces are just different chrome around it.
+ * Speech -> transcript -> validated commands -> crop selection -> the ordinary
+ * layout call. One place decides what "remove the kale" means; both surfaces
+ * are chrome around it.
  *
- * Three ways in, in order of preference, because a demo cannot hinge on one
- * API being reachable:
- *   1. ElevenLabs Scribe, when the backend has a key.
- *   2. The browser's own speech recognition, when it has one.
- *   3. Typed text, which always works and runs the same interpretation.
+ * Pressing the button is a tap OR a hold, deliberately. Push-to-talk alone
+ * looked broken to anyone who clicked it and then started talking: the
+ * recording began and ended inside the click, and every attempt came back "too
+ * short to hear". So a quick tap latches recording on until the next tap, and
+ * a real press-and-hold records for as long as it is held.
+ *
+ * Which recogniser runs is decided up front from /api/health rather than by
+ * failing over mid-attempt. Asking someone to say it a second time because the
+ * first recording could not be transcribed is a worse experience than simply
+ * using the recogniser that is actually available.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { generateLayout } from "./api";
+import { generateLayout, getHealth } from "./api";
 import { applyCommands, layoutCropsFor, type GardenSelection } from "./garden-commands";
 import { useGardenStore } from "./store";
-import { browserSpeechSupported, interpret, listenWithBrowser, transcribeAudio } from "./voice";
+import {
+  browserSpeechSupported,
+  interpret,
+  startBrowserRecognition,
+  transcribeAudio,
+  type BrowserListener,
+} from "./voice";
 
 export type VoicePhase = "idle" | "listening" | "thinking" | "planting";
 
-/** Below this, the recording is a stray tap rather than speech. */
-const MIN_AUDIO_BYTES = 1200;
+/** Which recogniser this session will use. */
+type Engine = "unknown" | "elevenlabs" | "browser" | "none";
+
+/** A press shorter than this latches recording on instead of ending it. */
+const TAP_MS = 400;
+/** Chunk interval. Without one, a short recording can yield a header and nothing else. */
+const CHUNK_MS = 250;
+/** A latched recording stops itself rather than holding the mic open forever. */
+const MAX_RECORDING_MS = 20000;
+/** Below this there is no speech in the buffer, only container overhead. */
+const MIN_AUDIO_BYTES = 900;
 const UNDO_DEPTH = 10;
 
 export function useVoiceGarden() {
@@ -35,10 +54,50 @@ export function useVoiceGarden() {
   const [log, setLog] = useState<string[]>([]);
   const [problem, setProblem] = useState("");
   const [micUnavailable, setMicUnavailable] = useState(false);
+  const [engine, setEngine] = useState<Engine>("unknown");
+  /** True while a tap has latched recording on, so the UI can say "Tap to stop". */
+  const [latched, setLatched] = useState(false);
 
   const recorder = useRef<MediaRecorder | null>(null);
+  const stream = useRef<MediaStream | null>(null);
+  const listener = useRef<BrowserListener | null>(null);
   const chunks = useRef<BlobPart[]>([]);
   const history = useRef<GardenSelection[]>([]);
+
+  const pressedAt = useRef(0);
+  const isLatched = useRef(false);
+  const ignoreNextRelease = useRef(false);
+  /** Set when the button is released before getUserMedia has resolved. */
+  const stopWhenReady = useRef(false);
+  const maxTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  // Decide the recogniser once. A 503 from /api/voice/transcribe would tell us
+  // the same thing, but only after the user had already spoken.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const health = await getHealth();
+      if (cancelled) return;
+      const backendHasStt = health.data.systems?.speech_to_text === "elevenlabs";
+      if (backendHasStt) return setEngine("elevenlabs");
+      setEngine(browserSpeechSupported() ? "browser" : "none");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const releaseMic = useCallback(() => {
+    clearTimeout(maxTimer.current);
+    stream.current?.getTracks().forEach((track) => track.stop());
+    stream.current = null;
+    recorder.current = null;
+    listener.current = null;
+    isLatched.current = false;
+    setLatched(false);
+  }, []);
+
+  useEffect(() => releaseMic, [releaseMic]);
 
   const regenerate = useCallback(
     async (selection: GardenSelection) => {
@@ -116,64 +175,140 @@ export function useVoiceGarden() {
     [regenerate, state.plantCounts, state.recommendations, state.selectedCropIds],
   );
 
-  const startListening = useCallback(async () => {
+  /* ---------------- recording ---------------- */
+
+  const finishRecording = useCallback(() => {
+    if (listener.current) {
+      listener.current.stop();
+      return;
+    }
+    const media = recorder.current;
+    if (media && media.state === "recording") {
+      media.stop();
+      return;
+    }
+    // Released before the stream arrived — stop as soon as it does.
+    stopWhenReady.current = true;
+  }, []);
+
+  const beginBrowserRecognition = useCallback(() => {
+    const handle = startBrowserRecognition();
+    listener.current = handle;
+    setPhase("listening");
+
+    void handle.result.then(async (heard) => {
+      releaseMic();
+      if (!heard) {
+        setPhase("idle");
+        setProblem("Didn't catch that. Try again, or type the change.");
+        return;
+      }
+      await run(heard);
+    });
+  }, [releaseMic, run]);
+
+  const beginRecording = useCallback(async () => {
     setProblem("");
+    stopWhenReady.current = false;
+
+    if (engine === "browser") {
+      beginBrowserRecognition();
+      return;
+    }
+
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setMicUnavailable(true);
       setProblem("This browser has no microphone API — type the request instead.");
       return;
     }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const media = new MediaRecorder(stream);
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.current = mediaStream;
+      const media = new MediaRecorder(mediaStream);
       chunks.current = [];
+
       media.ondataavailable = (event) => {
         if (event.data.size > 0) chunks.current.push(event.data);
       };
+
       media.onstop = async () => {
-        stream.getTracks().forEach((track) => track.stop());
         const blob = new Blob(chunks.current, { type: media.mimeType || "audio/webm" });
+        releaseMic();
+
         if (blob.size < MIN_AUDIO_BYTES) {
           setPhase("idle");
-          setProblem("That was too short to hear. Hold the button while you speak.");
+          setProblem("Didn't hear anything. Tap once to start, speak, then tap again.");
           return;
         }
+
         setPhase("thinking");
         const result = await transcribeAudio(blob);
         if (result.text) {
           await run(result.text);
           return;
         }
-        // ElevenLabs unavailable — try the browser's recogniser before giving up.
-        if (browserSpeechSupported()) {
-          setProblem("Using this browser's speech recognition instead. Speak now.");
-          setPhase("listening");
-          const heard = await listenWithBrowser();
-          if (heard) {
-            await run(heard);
-            return;
-          }
-        }
         setPhase("idle");
+        if (browserSpeechSupported()) {
+          // Use it for the NEXT attempt rather than asking them to repeat now.
+          setEngine("browser");
+          setProblem("Transcription is unavailable — switched to this browser's recogniser, try again.");
+          return;
+        }
         setMicUnavailable(true);
         setProblem(result.error ?? "Couldn't transcribe that — type it instead.");
       };
-      media.start();
+
+      // A timeslice means data accumulates as we go; without one a short
+      // recording can end before any is emitted.
+      media.start(CHUNK_MS);
       recorder.current = media;
       setPhase("listening");
+
+      maxTimer.current = setTimeout(() => {
+        if (recorder.current?.state === "recording") recorder.current.stop();
+      }, MAX_RECORDING_MS);
+
+      // The button was already released while the permission prompt was up.
+      if (stopWhenReady.current) {
+        stopWhenReady.current = false;
+        media.stop();
+      }
     } catch {
+      releaseMic();
       setMicUnavailable(true);
       setPhase("idle");
       setProblem("Microphone access was blocked — type the request instead.");
     }
-  }, [run]);
+  }, [beginBrowserRecognition, engine, releaseMic, run]);
 
-  const stopListening = useCallback(() => {
-    if (recorder.current && recorder.current.state === "recording") {
-      recorder.current.stop();
-      recorder.current = null;
+  /* ---------------- press handling ---------------- */
+
+  const onPressStart = useCallback(() => {
+    // Second tap of a latched recording: stop and submit.
+    if (isLatched.current && phase === "listening") {
+      ignoreNextRelease.current = true;
+      finishRecording();
+      return;
     }
-  }, []);
+    pressedAt.current = Date.now();
+    void beginRecording();
+  }, [beginRecording, finishRecording, phase]);
+
+  const onPressEnd = useCallback(() => {
+    if (ignoreNextRelease.current) {
+      ignoreNextRelease.current = false;
+      return;
+    }
+    const held = Date.now() - pressedAt.current;
+    if (held < TAP_MS) {
+      // A tap, not a hold: keep listening until they tap again.
+      isLatched.current = true;
+      setLatched(true);
+      return;
+    }
+    finishRecording();
+  }, [finishRecording]);
 
   return {
     phase,
@@ -181,10 +316,14 @@ export function useVoiceGarden() {
     log,
     problem,
     micUnavailable,
+    /** True once a tap has latched recording on. */
+    latched,
+    /** Which recogniser is in play, for honest UI copy. */
+    engine,
     busy: phase === "thinking" || phase === "planting",
     run,
-    startListening,
-    stopListening,
+    onPressStart,
+    onPressEnd,
     clearProblem: () => setProblem(""),
   };
 }

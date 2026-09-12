@@ -129,6 +129,11 @@ browser. Nothing below has run on real hardware.
 
 ## 10. Voice control, with a real ElevenLabs key
 
+> Note: with **no** key the web app uses the browser's own recogniser (Chrome
+> and Safari yes, Firefox no) and works without ElevenLabs. The key upgrades
+> the transcription, it does not switch the feature on.
+
+
 The interpretation half has 29 tests and needs no key. The **transcription half
 has never run against ElevenLabs** — there was no API key available.
 

@@ -14,12 +14,12 @@ import { useState } from "react";
 import { cx } from "@/lib/format";
 import { useVoiceGarden, type VoicePhase } from "@/lib/use-voice-garden";
 
-const PHASE_LABEL: Record<VoicePhase, string> = {
-  idle: "Hold to talk",
-  listening: "Listening…",
-  thinking: "Working out what you meant…",
-  planting: "Replanting…",
-};
+function buttonLabel(phase: VoicePhase, latched: boolean): string {
+  if (phase === "listening") return latched ? "Listening — tap to send" : "Listening…";
+  if (phase === "thinking") return "Working out what you meant…";
+  if (phase === "planting") return "Replanting…";
+  return "Tap or hold to talk";
+}
 
 export function VoiceGardenControl() {
   const voice = useVoiceGarden();
@@ -29,22 +29,28 @@ export function VoiceGardenControl() {
     <section className="card p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-display text-lg text-forest">Change it by voice</h2>
-        <span className="text-[11px] text-ink-faint">Hold, speak, release</span>
+        <span className="text-[11px] text-ink-faint">Tap, speak, tap</span>
       </div>
 
       <p className="mt-1 text-xs leading-relaxed text-ink-muted">
         Try &ldquo;add basil and mint&rdquo;, &ldquo;remove the kale&rdquo;, &ldquo;six
         tomatoes&rdquo;, &ldquo;double the lettuce&rdquo;, or &ldquo;undo&rdquo;.
       </p>
+      {voice.engine === "browser" ? (
+        <p className="mt-1 text-[11px] text-ink-faint">
+          Using this browser&apos;s speech recognition — set{" "}
+          <code className="rounded bg-cream-deep px-1 py-0.5">ELEVENLABS_API_KEY</code> on the
+          backend for ElevenLabs.
+        </p>
+      ) : null}
 
       {!voice.micUnavailable ? (
         <button
           type="button"
           disabled={voice.busy}
-          onPointerDown={voice.startListening}
-          onPointerUp={voice.stopListening}
-          onPointerLeave={voice.stopListening}
-          onPointerCancel={voice.stopListening}
+          onPointerDown={voice.onPressStart}
+          onPointerUp={voice.onPressEnd}
+          onPointerCancel={voice.onPressEnd}
           className={cx(
             "mt-4 flex w-full items-center justify-center gap-2 rounded-pill px-5 py-3.5 text-sm font-semibold transition-colors",
             voice.phase === "listening"
@@ -61,7 +67,7 @@ export function VoiceGardenControl() {
             )}
             aria-hidden="true"
           />
-          {PHASE_LABEL[voice.phase]}
+          {buttonLabel(voice.phase, voice.latched)}
         </button>
       ) : null}
 

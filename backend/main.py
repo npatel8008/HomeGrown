@@ -95,5 +95,9 @@ def health() -> dict:
             "location": "open-meteo-geocoding",
             "climate": "open-meteo-archive",
             "weather": "open-meteo-forecast",
+            # The voice control reads these to pick a recogniser up front,
+            # rather than discovering the answer after someone has spoken.
+            "speech_to_text": "elevenlabs" if elevenlabs_stt.is_available() else "browser-or-text",
+            "voice_commands": "rules+llm" if llm_on else "rules",
         },
     }

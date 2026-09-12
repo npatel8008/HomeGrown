@@ -46,12 +46,14 @@ export function ARVoiceControl() {
 
   const label =
     voice.phase === "listening"
-      ? "Listening…"
+      ? voice.latched
+        ? "Listening — tap to send"
+        : "Listening…"
       : voice.phase === "thinking"
         ? "Thinking…"
         : voice.phase === "planting"
           ? "Replanting…"
-          : "Hold to change the garden";
+          : "Tap to change the garden";
 
   return (
     <div className="pointer-events-none flex flex-col items-center gap-2">
@@ -78,14 +80,13 @@ export function ARVoiceControl() {
           disabled={voice.busy}
           onPointerDown={(event) => {
             swallow(event);
-            void voice.startListening();
+            voice.onPressStart();
           }}
           onPointerUp={(event) => {
             swallow(event);
-            voice.stopListening();
+            voice.onPressEnd();
           }}
-          onPointerLeave={voice.stopListening}
-          onPointerCancel={voice.stopListening}
+          onPointerCancel={voice.onPressEnd}
           onPointerMove={swallow}
           className={cx(
             "pointer-events-auto flex items-center gap-2 rounded-pill px-5 py-2.5 text-sm font-semibold shadow-lift transition-colors",

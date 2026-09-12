@@ -88,30 +88,68 @@ export function browserSpeechSupported(): boolean {
   return Boolean(w.SpeechRecognition || w.webkitSpeechRecognition);
 }
 
-/** Resolves with the transcript, or null if it heard nothing usable. */
-export function listenWithBrowser(): Promise<string | null> {
-  return new Promise((resolve) => {
-    const w = window as unknown as Record<string, unknown>;
-    const Recognition = (w.SpeechRecognition || w.webkitSpeechRecognition) as
-      | (new () => SpeechRecognitionLike)
-      | undefined;
-    if (!Recognition) return resolve(null);
+export interface BrowserListener {
+  /** Resolves with the transcript, or null if it heard nothing usable. */
+  result: Promise<string | null>;
+  /** Ends the recognition early — what the button release calls. */
+  stop: () => void;
+}
 
-    const recognition = new Recognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+/**
+ * Start the browser's own recogniser, under the caller's control.
+ *
+ * Returns a handle rather than a bare promise so push-to-talk can end it on
+ * release. Recognition also stops itself on a pause, which is why `result` can
+ * settle before `stop()` is ever called.
+ */
+export function startBrowserRecognition(): BrowserListener {
+  const w = window as unknown as Record<string, unknown>;
+  const Recognition = (w.SpeechRecognition || w.webkitSpeechRecognition) as
+    | (new () => SpeechRecognitionLike)
+    | undefined;
 
-    let settled = false;
-    const finish = (value: string | null) => {
+  if (!Recognition) {
+    return { result: Promise.resolve(null), stop: () => undefined };
+  }
+
+  const recognition = new Recognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  let settle: (value: string | null) => void = () => undefined;
+  let settled = false;
+  const result = new Promise<string | null>((resolve) => {
+    settle = (value) => {
       if (settled) return;
       settled = true;
       resolve(value);
     };
-
-    recognition.onresult = (event) => finish(event.results[0][0].transcript);
-    recognition.onerror = () => finish(null);
-    recognition.onend = () => finish(null);
-    recognition.start();
   });
+
+  recognition.onresult = (event) => settle(event.results[0][0].transcript);
+  recognition.onerror = () => settle(null);
+  recognition.onend = () => settle(null);
+
+  try {
+    recognition.start();
+  } catch {
+    settle(null);
+  }
+
+  return {
+    result,
+    stop: () => {
+      try {
+        recognition.stop();
+      } catch {
+        settle(null);
+      }
+    },
+  };
+}
+
+/** One-shot convenience wrapper. */
+export function listenWithBrowser(): Promise<string | null> {
+  return startBrowserRecognition().result;
 }
