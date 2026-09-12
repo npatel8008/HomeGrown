@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { ProgressHeader } from "@/components/layout/ProgressHeader";
 import { GardenGrid, PlantLegend } from "@/components/garden/GardenGrid";
 import { PlantDetailsPanel } from "@/components/garden/PlantDetailsPanel";
+import { StartGardenCard } from "@/components/garden/StartGardenCard";
 import { ArrowRightIcon, CubeIcon } from "@/components/ui/Icons";
 import { OfflineNotice } from "@/components/ui/OfflineNotice";
 import { VoiceGardenControl } from "@/components/voice/VoiceGardenControl";
@@ -105,6 +106,7 @@ export default function GardenPlanPage() {
             <GardenGrid layout={layout} selectedId={selected?.id ?? null} onSelect={setSelected} />
 
             <div className="space-y-4 lg:sticky lg:top-24">
+              <StartGardenCard plantCount={layout.plants.length} />
               <VoiceGardenControl />
               <PlantDetailsPanel plant={selected} onClose={() => setSelected(null)} />
               <PlantLegend layout={layout} />

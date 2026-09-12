@@ -428,5 +428,68 @@ export interface InterpretResponse {
   commands: GardenCommand[];
   descriptions: string[];
   understood: boolean;
+
+
+/* ------------------------------------------------------------------ */
+/* 6. Growth schedule — POST /api/me/garden/start, GET /api/me/schedule */
+/* ------------------------------------------------------------------ */
+
+export type GrowthStage =
+  | "not-started"
+  | "establishing"
+  | "growing"
+  | "maturing"
+  | "harvesting"
+  | "finished";
+
+export interface StartGardenRequest {
+  /** ISO datetime. Omit for "now"; backdate if the garden went in earlier. */
+  season_start?: string | null;
+  crop_ids?: string[];
+}
+
+export interface CropSchedule {
+  crop_id: string;
+  crop: string;
+  plants: number;
+  planted_on: string;
+  days_since_planting: number;
+  days_to_harvest: number;
+  progress_pct: number;
+  stage: GrowthStage;
+  stage_label: string;
+
+  water_requirement: string;
+  water_interval_days: number;
+  last_watered: string | null;
+  next_water_date: string | null;
+  days_until_water: number | null;
+  water_due: boolean;
+  water_note: string;
+
+  first_harvest_date: string;
+  days_until_harvest: number;
+  harvest_window_ends: string;
+  harvest_open: boolean;
+  harvested_lbs: number;
+  expected_yield_lbs: number;
+
+  color: string;
+  next_action: string;
+}
+
+export interface ScheduleResponse {
+  started: boolean;
+  season_start: string | null;
+  day_of_season: number;
+  season_length_days: number;
+  location: string;
+  weather: Weather | null;
+  crops: CropSchedule[];
+  tasks: CareTask[];
+  counts: Record<string, number>;
+  harvested_lbs: number;
+  harvested_value_usd: number;
+  projected_value_usd: number;
   generated_by: string;
 }

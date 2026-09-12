@@ -19,6 +19,8 @@ import type {
   PlantingStatus,
   SavedGarden,
   SavedGardenOut,
+  ScheduleResponse,
+  StartGardenRequest,
 } from "./types";
 
 /** Why a per-account call could not be served. Drives honest UI copy. */
@@ -63,6 +65,24 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<MeResult<T
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
+}
+
+/* ---- the growth schedule ---------------------------------------------- */
+
+/**
+ * Put the plan in the ground. Every placed plant in the saved layout becomes
+ * a dated planting, and progress is measured from `season_start` onward.
+ */
+export function startGarden(request: StartGardenRequest = {}) {
+  return call<ScheduleResponse>("/garden/start", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
+/** Where every crop is today, and what to do about it. */
+export function fetchSchedule() {
+  return call<ScheduleResponse>("/schedule");
 }
 
 /* ---- the saved garden ------------------------------------------------- */

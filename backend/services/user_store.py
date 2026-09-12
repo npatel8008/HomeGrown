@@ -302,6 +302,37 @@ def care_summary(user_id: str) -> Dict[str, Any]:
     }
 
 
+def start_season(
+    user_id: str,
+    season_start: datetime,
+    plantings: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Put the plan in the ground: stamp the start date and date every plant.
+
+    Idempotent by plant_id — restarting a season re-dates the existing
+    plantings rather than duplicating them, and care history is untouched
+    because events reference crop_id/plant_id, not the planting document.
+    """
+    database = _db()
+    now = _now()
+
+    database[GARDENS].update_one(
+        {"user_id": user_id},
+        {
+            "$set": {"season_start": season_start, "updated_at": now},
+            "$setOnInsert": {"user_id": user_id, "created_at": now},
+        },
+        upsert=True,
+    )
+
+    for planting in plantings:
+        planting.setdefault("planted_on", season_start)
+        planting["status"] = planting.get("status") or "planted"
+
+    saved = upsert_plantings(user_id, plantings) if plantings else []
+    return {"season_start": season_start, "plantings": saved}
+
+
 def delete_all_user_data(user_id: str) -> Dict[str, int]:
     """Everything this user owns. Used by the account page."""
     database = _db()

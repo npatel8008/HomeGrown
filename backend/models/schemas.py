@@ -500,3 +500,82 @@ class InterpretResponse(BaseModel):
     descriptions: List[str] = Field(default_factory=list)
     understood: bool = False
     generated_by: str = "rules"
+
+
+# ---------------------------------------------------------------------------
+# 6. Growth schedule  —  POST /api/me/garden/start, GET /api/me/schedule
+# ---------------------------------------------------------------------------
+
+
+class GrowthStage(str, Enum):
+    """Where a crop is in its run from sowing to the end of harvest."""
+
+    NOT_STARTED = "not-started"
+    ESTABLISHING = "establishing"
+    GROWING = "growing"
+    MATURING = "maturing"
+    HARVESTING = "harvesting"
+    FINISHED = "finished"
+
+
+class StartGardenRequest(BaseModel):
+    """Begin tracking. Everything in the saved layout goes in the ground."""
+
+    #: Defaults to now. Backdate it if the garden went in last week.
+    season_start: Optional[datetime] = None
+    #: Restrict to these crops; empty means whatever the saved garden selected.
+    crop_ids: List[str] = Field(default_factory=list)
+
+
+class CropSchedule(BaseModel):
+    """Progress and the next actions for one crop, from real dates."""
+
+    crop_id: str
+    crop: str
+    plants: int
+    planted_on: datetime
+    days_since_planting: int
+    days_to_harvest: int
+    #: 0-100, capped. Reaching 100 means the first harvest date has arrived.
+    progress_pct: int
+    stage: GrowthStage
+    stage_label: str
+
+    #: Watering, from the crop's needs, the weather, and what you actually did.
+    water_requirement: str
+    water_interval_days: float
+    last_watered: Optional[datetime] = None
+    next_water_date: Optional[datetime] = None
+    days_until_water: Optional[int] = None
+    water_due: bool = False
+    water_note: str = ""
+
+    #: Harvest.
+    first_harvest_date: datetime
+    days_until_harvest: int
+    harvest_window_ends: datetime
+    harvest_open: bool = False
+    harvested_lbs: float = 0
+    expected_yield_lbs: float = 0
+
+    color: str = "#4A8F5F"
+    next_action: str = ""
+
+
+class ScheduleResponse(BaseModel):
+    """Everything the "Today" page needs for a real, dated garden."""
+
+    started: bool
+    season_start: Optional[datetime] = None
+    day_of_season: int = 0
+    season_length_days: int = 0
+    location: str = ""
+    weather: Optional[Weather] = None
+    crops: List[CropSchedule] = Field(default_factory=list)
+    tasks: List[CareTask] = Field(default_factory=list)
+    counts: Dict[str, int] = Field(default_factory=dict)
+    #: Harvest logged so far vs. what the plan projects for the season.
+    harvested_lbs: float = 0
+    harvested_value_usd: float = 0
+    projected_value_usd: float = 0
+    generated_by: str = "growth-schedule-v0"

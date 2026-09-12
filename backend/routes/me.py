@@ -6,8 +6,9 @@ only identity in play is the one the token proved. Route handlers stay thin;
 the isolation guarantee lives in `services/user_store.py`.
 """
 
+import datetime as dt
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -20,10 +21,14 @@ from models.schemas import (
     PlantingPatch,
     SavedGarden,
     SavedGardenOut,
+    ScheduleResponse,
+    StartGardenRequest,
     UpsertPlantingsRequest,
 )
-from services import user_store
+from services import care_engine, growth_schedule, user_store
 from services.auth import Identity, get_current_user
+from services.climate import climate_profile
+from services.location import resolve as resolve_location
 
 router = APIRouter(prefix="/me", tags=["user-data"])
 
@@ -128,6 +133,89 @@ def read_care_summary(identity: Identity = Depends(get_current_user)):
     """Last watered / fed per crop and harvest totals — drives the Today page."""
     _require_store()
     return user_store.care_summary(identity.user_id)
+
+
+def _plantings_from_layout(garden: Optional[Dict[str, Any]], crop_ids: List[str]) -> List[dict]:
+    """Every placed plant in the saved layout becomes a tracked planting."""
+    layout = (garden or {}).get("layout") or {}
+    wanted = set(crop_ids or (garden or {}).get("selected_crop_ids") or [])
+    out: List[dict] = []
+    for plant in layout.get("plants") or []:
+        crop_id = plant.get("crop_id")
+        if wanted and crop_id not in wanted:
+            continue
+        out.append(
+            {
+                "plant_id": plant.get("id"),
+                "crop_id": crop_id,
+                "crop": plant.get("crop"),
+                "status": "planted",
+            }
+        )
+    return out
+
+
+@router.post("/garden/start", response_model=ScheduleResponse)
+def start_garden(
+    request: StartGardenRequest,
+    identity: Identity = Depends(get_current_user),
+):
+    """Begin tracking: stamp a start date and date every plant in the layout.
+
+    From here on, progress is measured against the real calendar rather than
+    a demo day counter.
+    """
+    _require_store()
+
+    garden = user_store.get_garden(identity.user_id)
+    if not garden:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Save a garden plan before starting the season.",
+        )
+
+    season_start = request.season_start or dt.datetime.now(dt.timezone.utc)
+    if season_start > dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=1):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A start date in the future has nothing to track yet.",
+        )
+
+    plantings = _plantings_from_layout(garden, request.crop_ids)
+    if not plantings:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The saved garden has no placed plants to track.",
+        )
+
+    user_store.start_season(identity.user_id, season_start, plantings)
+    return read_schedule(identity=identity)
+
+
+@router.get("/schedule", response_model=ScheduleResponse)
+def read_schedule(identity: Identity = Depends(get_current_user)):
+    """Where every crop is today, and what to do about it."""
+    _require_store()
+
+    garden = user_store.get_garden(identity.user_id) or {}
+    plantings = user_store.list_plantings(identity.user_id)
+    summary = user_store.care_summary(identity.user_id)
+    care_states = {row["crop_id"]: row for row in summary.get("crops", [])}
+
+    location = resolve_location(garden.get("location") or "", garden.get("zip_code") or "")
+    weather = care_engine.get_weather(
+        garden.get("location") or "", garden.get("zip_code") or ""
+    )
+    local = climate_profile(location.latitude, location.longitude)
+
+    return growth_schedule.build_schedule(
+        season_start=garden.get("season_start"),
+        plantings=plantings,
+        care_states=care_states,
+        weather=weather,
+        location_label=location.label,
+        season_length_days=max(60, min(365, local.frost_free_days)),
+    )
 
 
 @router.delete("/data", response_model=DeleteResult)
