@@ -185,6 +185,10 @@ export function ARGardenView({
             clockRef={clockRef}
             reducedMotion={reducedMotion}
             shadows={false}
+            // Same reason as the WebXR view: the garden is scaled to metres
+            // and sits about a metre away, where a distance-scaled label
+            // overflows the screen.
+            labelDistanceFactor={null}
             // The real floor is already visible through the camera; drawing a
             // grey plane over it is what makes cheap AR look pasted on.
             showGround={false}

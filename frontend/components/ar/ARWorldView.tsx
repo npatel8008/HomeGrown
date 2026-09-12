@@ -178,6 +178,9 @@ function AnchoredGarden({
           clockRef={clockRef}
           reducedMotion={reducedMotion}
           shadows={false}
+          // Fixed pixel size: at arm's length from a metre-scaled garden, a
+          // distance-scaled label fills the screen.
+          labelDistanceFactor={null}
           // The real floor is already there, through the camera.
           showGround={false}
         />

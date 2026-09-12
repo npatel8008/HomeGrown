@@ -140,6 +140,7 @@ function Plant({
   onSelect,
   register,
   labels,
+  labelDistanceFactor,
 }: {
   plant: PlacedPlant;
   y: number;
@@ -148,6 +149,8 @@ function Plant({
   onSelect: (plant: PlacedPlant) => void;
   register: (handle: PlantHandle | null, id: string) => void;
   labels: boolean;
+  /** drei scales by distanceFactor/distance; null means fixed pixel size. */
+  labelDistanceFactor: number | null;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const fruitRef = useRef<THREE.Group>(null);
@@ -198,8 +201,18 @@ function Plant({
             <meshBasicMaterial color="#1B3B2A" transparent opacity={0.55} />
           </mesh>
           {labels ? (
-            <Html center distanceFactor={11} position={[0, Math.max(0.9, plant.height) + 0.35, 0]}>
-              <div className="pointer-events-none whitespace-nowrap rounded-lg bg-forest px-2.5 py-1.5 text-[11px] font-medium text-cream shadow-lift">
+            <Html
+              center
+              // In the 3D view the camera sits ~17 scene units away, so scaling
+              // with distance keeps the label in proportion. In AR you stand
+              // about a metre from a garden that has been scaled to metres, and
+              // the same factor blows the label off the screen — so AR passes
+              // null and gets a constant, readable pixel size instead.
+              {...(labelDistanceFactor !== null ? { distanceFactor: labelDistanceFactor } : {})}
+              position={[0, Math.max(0.9, plant.height) + 0.35, 0]}
+              zIndexRange={[100, 0]}
+            >
+              <div className="pointer-events-none max-w-[60vw] truncate whitespace-nowrap rounded-lg bg-forest px-2.5 py-1.5 text-[11px] font-medium text-cream shadow-lift">
                 {plant.crop} · {plant.expected_yield_lbs} lbs
               </div>
             </Html>
@@ -315,6 +328,7 @@ export function GardenSceneContent({
   reducedMotion,
   shadows = true,
   labels = true,
+  labelDistanceFactor = 11,
   showGround = true,
 }: {
   layout: GenerateLayoutResponse;
@@ -325,6 +339,12 @@ export function GardenSceneContent({
   /** Off in AR: shadow maps are the single most expensive thing on a phone. */
   shadows?: boolean;
   labels?: boolean;
+  /**
+   * How the floating plant label is sized. A number scales it with camera
+   * distance (right for the desktop 3D view); `null` pins it to a constant
+   * pixel size, which is what AR needs.
+   */
+  labelDistanceFactor?: number | null;
   /** Off in AR, where the real ground is already visible through the camera. */
   showGround?: boolean;
 }) {
@@ -371,6 +391,7 @@ export function GardenSceneContent({
             onSelect={onSelect}
             register={register}
             labels={labels}
+            labelDistanceFactor={labelDistanceFactor}
           />
         ))}
       </group>
