@@ -26,7 +26,7 @@ REQUIRED_FIELDS = (
     "id", "name", "category", "sunlight_hours", "spacing_ft", "mature_height_ft",
     "days_to_harvest", "water_requirement", "difficulty", "estimated_yield_per_plant",
     "estimated_cost_per_plant", "estimated_grocery_price", "container_compatible",
-    "season", "image", "color", "description", "model",
+    "season", "image", "color", "description", "model", "popularity",
 )
 
 
@@ -115,3 +115,24 @@ def test_the_generator_is_the_source_of_truth(crops):
     from scripts.build_crops import build
 
     assert build()["crops"] == crops, "data/crops.json is out of step with build_crops.py"
+
+
+def test_popularity_tiers_are_sane(crops):
+    """1 = in almost every garden, 3 = niche. The scorer will not suggest a
+    tier-3 crop unprompted, so the tiers have to mean something."""
+    tiers = {crop["popularity"] for crop in crops}
+    assert tiers <= {1, 2, 3}, tiers
+
+    counts = {tier: sum(1 for c in crops if c["popularity"] == tier) for tier in (1, 2, 3)}
+    # None of the three may be a rounding error, or the distinction is fake.
+    for tier, count in counts.items():
+        assert count >= 20, "tier %d has only %d crops: %s" % (tier, count, counts)
+
+
+def test_the_staples_are_tier_one(crops):
+    """If these are not the common ones, the tiers are wired up wrong."""
+    by_id = {crop["id"]: crop for crop in crops}
+    for crop_id in ("tomato", "lettuce", "carrot", "basil", "zucchini", "strawberry"):
+        assert by_id[crop_id]["popularity"] == 1, crop_id
+    for crop_id in ("watercress", "chervil", "sunchoke", "luffa"):
+        assert by_id[crop_id]["popularity"] == 3, crop_id

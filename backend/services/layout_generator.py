@@ -15,7 +15,7 @@ succession slots, trellised/vertical space and sun-path shading.
 """
 
 import math
-from typing import List
+from typing import List, Optional
 
 from models.schemas import (
     GardenType,
@@ -37,11 +37,52 @@ PATH_WIDTH_FT = 1.0
 EPS = 0.001
 
 
+def largest_plantable_spacing_ft(
+    width: float,
+    length: float,
+    max_bed_depth_ft: Optional[float] = None,
+) -> float:
+    """The widest spacing this plot can actually hold a plant at.
+
+    A plant needs its spacing in both directions: across the bed, and into it.
+    The best case is a single bed running the full plot, so the limit is the
+    smaller of the two inner dimensions — tightened further when the gardener
+    has said how far they can reach into a bed.
+
+    `crop_scoring` uses this to refuse to recommend a crop the packer would
+    then have to drop, which is the difference between "we did not suggest a
+    walnut for your 12x8 bed" and "we suggested one and it vanished".
+    """
+    inner_w = max(0.0, width - 2 * MARGIN_FT)
+    inner_l = max(0.0, length - 2 * MARGIN_FT)
+    depth = inner_l if not max_bed_depth_ft else min(inner_l, max_bed_depth_ft)
+    return max(0.0, min(inner_w, depth))
+
+
+def plantable_bed_area_ft2(
+    width: float,
+    length: float,
+    garden_type: GardenType,
+    max_bed_depth_ft: Optional[float] = None,
+) -> float:
+    """Square feet of actual bed, once margins and walking paths are taken out.
+
+    `crop_scoring` allocates against this rather than a flat percentage of the
+    plot. The two systems stay deliberately separate, but they should at least
+    agree on how much ground there is: a flat 22% overhead assumed 187 sq ft on
+    a 20x12 plot where the packer builds 152, and the crops at the end of the
+    list were promised space that did not exist.
+    """
+    beds, _paths = _build_beds(width, length, garden_type, 0.0, max_bed_depth_ft)
+    return sum(bed.width * bed.length for bed in beds)
+
+
 def _build_beds(
     width: float,
     length: float,
     garden_type: GardenType,
     deepest_crop_ft: float = 0.0,
+    max_bed_depth_ft: Optional[float] = None,
 ):
     """Split the plot into bed strips separated by walking paths."""
     beds: List[LayoutBed] = []
@@ -58,7 +99,17 @@ def _build_beds(
     # and you do not need to reach the middle of an apple tree. So the target
     # depth grows to fit whatever is actually being planted.
     target_depth = max(TARGET_BED_DEPTH_FT, deepest_crop_ft + 2 * MARGIN_FT)
+
+    # An explicit cap wins over the crop's wishes: if you can only reach two
+    # feet into a bed against a wall, a bed three feet deep is useless to you
+    # however much the squash would like it.
+    cap = max_bed_depth_ft if max_bed_depth_ft and max_bed_depth_ft > 0 else None
+    if cap:
+        target_depth = min(target_depth, cap)
+
     reachable_depth = max(MAX_REACHABLE_DEPTH_FT, target_depth)
+    if cap:
+        reachable_depth = min(reachable_depth, cap)
 
     bed_count = 1
     if inner_l > reachable_depth:
@@ -73,11 +124,24 @@ def _build_beds(
     depth = (inner_l - path_total) / bed_count
 
     # If the result still cannot hold the deepest crop, drop paths until it
-    # can: one usable bed beats four that fit nothing.
+    # can: one usable bed beats four that fit nothing. A depth cap stops this.
     while bed_count > 1 and depth + EPS < deepest_crop_ft:
-        bed_count -= 1
-        path_total = (bed_count - 1) * PATH_WIDTH_FT
-        depth = (inner_l - path_total) / bed_count
+        fewer = bed_count - 1
+        fewer_paths = (fewer - 1) * PATH_WIDTH_FT
+        fewer_depth = (inner_l - fewer_paths) / fewer
+        if cap and fewer_depth > cap + EPS:
+            break
+        bed_count, path_total, depth = fewer, fewer_paths, fewer_depth
+
+    # And with a cap in force, add beds until no bed is deeper than allowed.
+    if cap:
+        while depth > cap + EPS:
+            more = bed_count + 1
+            more_paths = (more - 1) * PATH_WIDTH_FT
+            if more_paths >= inner_l:
+                break  # no room left for another path
+            bed_count, path_total = more, more_paths
+            depth = (inner_l - path_total) / bed_count
     z = MARGIN_FT
     for index in range(bed_count):
         beds.append(
@@ -108,7 +172,11 @@ def generate_layout(request: GenerateLayoutRequest) -> GenerateLayoutResponse:
     )
 
     beds, paths = _build_beds(
-        request.plot.width_ft, request.plot.length_ft, request.garden_type, deepest
+        request.plot.width_ft,
+        request.plot.length_ft,
+        request.garden_type,
+        deepest,
+        request.max_bed_depth_ft,
     )
 
     # crop -> plants still waiting for a home

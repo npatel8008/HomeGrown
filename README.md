@@ -85,9 +85,41 @@ field, which the layout response carries through to the 3D and AR scenes.
 `PlantModels.tsx` and fails if the data names one the scene cannot draw — so a
 new crop cannot quietly render as a generic bush.
 
+Each crop also carries a `popularity` tier — 1 is in almost every vegetable
+garden, 3 is niche. The recommender will suggest tiers 1 and 2 to fill leftover
+ground but never a tier-3 crop unprompted: watercress scores well on shelf
+price per square foot and wants a bog, and before the tiers existed it was
+being recommended to households that had asked for tomatoes and salad. Ask for
+it by name and you still get it.
+
 Yields, costs and retail prices are **informed estimates, not measured data**,
 and they are what the savings figures are built on. The file says so in its own
 `_meta` block.
+
+### What can be recommended, and where it goes
+
+Recommendations are scored across all 245 crops, then constrained so the list
+is actually plantable:
+
+- **It has to fit.** A crop spaced wider than the plot can hold is refused
+  outright, with the numbers in the reason ("Needs 2.5 ft between plants; your
+  space allows 2.0 ft"). `largest_plantable_spacing_ft` in the layout generator
+  is the single source of that limit, so the recommender and the packer cannot
+  disagree about it.
+- **`max_bed_depth_ft`** (optional, on the growing space) says how far you can
+  reach into a bed — against a wall or fence, not far. It caps bed depth and
+  therefore which crops are possible at all.
+- **Containers only get container crops**, and the plot only gets as much
+  variety as a household would really look after (4–14 crops by size, rather
+  than the 47 an uncapped allocator once picked for a 40×30 plot).
+- **Leftover ground** is filled from crops the household did not name only if
+  they are commonly grown, clear a higher score bar, and do not stack up in one
+  category — otherwise the spare space became four kinds of legume.
+
+The allocator sizes itself against the bed area the packer will really build,
+times a measured packing efficiency, because shelf packing cannot fill a bed
+exactly. Anything that still does not fit comes back in `unplaced` rather than
+disappearing.
 
 ### Accounts and per-user data
 

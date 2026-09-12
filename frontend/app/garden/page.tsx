@@ -29,6 +29,7 @@ export default function GardenPlanPage() {
     const result = await generateLayout({
       plot: state.space.plot,
       garden_type: state.space.garden_type,
+      max_bed_depth_ft: state.space.max_bed_depth_ft ?? null,
       // Shared with the voice control, so a spoken edit and a clicked one
       // build the identical request.
       crops: layoutCropsFor(

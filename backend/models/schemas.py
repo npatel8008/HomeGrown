@@ -96,6 +96,10 @@ class GrowingSpace(BaseModel):
     budget_usd: float = Field(default=150, ge=0)
     water_access: WaterAccess = WaterAccess.HOSE
     notes: str = ""
+    #: How far the gardener can reach into a bed. Caps bed depth, and with it
+    #: which crops can be planted at all — a crop spaced wider than this has
+    #: nowhere to go. None means "work it out from the plot".
+    max_bed_depth_ft: Optional[float] = Field(default=None, gt=0, le=40)
 
 
 class ResolvedLocationOut(BaseModel):
@@ -227,6 +231,9 @@ class GenerateLayoutRequest(BaseModel):
     plot: PlotSpec = Field(default_factory=PlotSpec)
     garden_type: GardenType = GardenType.RAISED_BEDS
     crops: List[LayoutPlantRequest] = Field(default_factory=list)
+    #: Mirrors GrowingSpace.max_bed_depth_ft, so a layout can be regenerated
+    #: with the same constraint the recommendations were filtered by.
+    max_bed_depth_ft: Optional[float] = Field(default=None, gt=0, le=40)
 
 
 class PlacedPlant(BaseModel):

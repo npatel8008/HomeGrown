@@ -124,6 +124,7 @@ export function useVoiceGarden({ onScale }: VoiceGardenOptions = {}) {
       const result = await generateLayout({
         plot: state.space.plot,
         garden_type: state.space.garden_type,
+      max_bed_depth_ft: state.space.max_bed_depth_ft ?? null,
         crops,
       });
       update({ ...selection, layout: result.data, layoutOffline: result.usedFallback });

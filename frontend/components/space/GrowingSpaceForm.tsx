@@ -145,6 +145,27 @@ export function GrowingSpaceForm({
         </div>
       </div>
 
+      <div>
+        <span className="label">How far can you reach in?</span>
+        <p className="-mt-1 mb-2 text-xs leading-relaxed text-ink-muted">
+          Optional. If a bed backs onto a wall or fence you can only reach so far into it, and
+          nothing wider-spaced than that will fit. Leave it blank and we work it out from the plot.
+        </p>
+        <div className="grid grid-cols-[1fr_auto] items-center gap-2 sm:max-w-xs">
+          <DimensionInput
+            label="Maximum bed depth in feet"
+            value={space.max_bed_depth_ft ?? 0}
+            onCommit={(depth) =>
+              // 0 or blank means "no limit" rather than "a bed of no depth".
+              onChange({ max_bed_depth_ft: depth > 0 ? depth : null })
+            }
+          />
+          <span className="rounded-xl border border-line bg-cream-deep px-3 py-2.5 text-sm text-ink-muted">
+            feet
+          </span>
+        </div>
+      </div>
+
       <OptionGrid
         legend="Garden type"
         options={GARDEN_TYPE_OPTIONS}

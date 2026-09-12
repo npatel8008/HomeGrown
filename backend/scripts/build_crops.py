@@ -29,6 +29,66 @@ ARCHETYPES = {
     "tree", "shrub", "cane", "grass", "mound", "stalk", "head",
 }
 
+# How commonly this is actually grown in a home garden.
+#
+#   1  the things almost every vegetable garden has
+#   2  mainstream, widely grown, just not universal
+#   3  niche — worth having in the library, wrong to suggest unprompted
+#
+# The scorer uses this to decide what may fill leftover ground. Chervil and
+# watercress score well on shelf price per square foot, so without a notion of
+# "normal" they were being recommended to households that had asked for
+# tomatoes and salad. Watercress wants a bog.
+TIER_1 = {
+    "tomato", "cherry-tomato", "roma-tomato", "bell-pepper", "jalapeno", "eggplant",
+    "cucumber", "pickling-cucumber", "zucchini", "yellow-squash", "butternut-squash",
+    "pumpkin", "sugar-pumpkin", "watermelon", "cantaloupe", "green-beans", "bush-beans",
+    "snap-peas", "snow-peas", "peas", "lettuce", "romaine", "butterhead", "spinach",
+    "kale", "lacinato-kale", "swiss-chard", "arugula", "collard-greens", "cabbage",
+    "broccoli", "cauliflower", "brussels-sprouts", "bok-choy", "carrot", "beet",
+    "radish", "turnip", "onion", "red-onion", "sweet-onion", "garlic", "green-onion",
+    "shallot", "leek", "chives", "potato", "sweet-potato", "celery", "basil",
+    "cilantro", "parsley", "flat-leaf-parsley", "dill", "mint", "peppermint",
+    "spearmint", "oregano", "thyme", "rosemary", "sage", "strawberry", "blueberry",
+    "raspberry", "blackberry", "grape", "apple", "dwarf-apple", "pear", "peach",
+    "plum", "cherry", "fig", "lemon", "sweet-corn", "sunflower", "asparagus",
+    "rhubarb", "mustard-greens", "tomatillo", "artichoke",
+}
+TIER_3 = {
+    # unusual greens and stems
+    "chervil", "watercress", "mache", "purslane", "orach", "sorrel", "celtuce",
+    "cardoon", "malabar-spinach", "new-zealand-spinach", "amaranth-greens",
+    "chinese-broccoli",
+    # unusual roots
+    "yacon", "jicama", "sunchoke", "salsify", "burdock", "daikon",
+    # unusual alliums
+    "ramps", "walking-onion", "elephant-garlic", "garlic-chives",
+    # specialist herbs
+    "holy-basil", "epazote", "shiso", "stevia", "anise-hyssop", "lovage", "savory",
+    "bay-laurel", "curry-leaf", "kaffir-lime-leaf", "lemongrass",
+    # collector's fruit
+    "alpine-strawberry", "lingonberry", "aronia", "goji", "jostaberry",
+    "white-currant", "tayberry", "boysenberry", "honeyberry", "pawpaw", "jujube",
+    "medlar", "passionfruit", "calamondin", "hops",
+    # long-season oddities and field crops
+    "luffa", "bitter-melon", "armenian-cucumber", "ground-cherry", "padron",
+    "thai-chilli", "yardlong-beans", "chia", "lentils", "chickpeas",
+    "black-eyed-peas", "peanuts", "sesame", "flax", "buckwheat", "millet",
+    "sorghum", "rye", "barley", "oats", "wheat", "flour-corn", "quinoa",
+    "amaranth-grain",
+    # edible flowers grown for the flower rather than the crop
+    "viola", "bee-balm", "hibiscus-roselle", "squash-blossom",
+}
+
+
+def popularity_of(crop_id: str) -> int:
+    if crop_id in TIER_1:
+        return 1
+    if crop_id in TIER_3:
+        return 3
+    return 2
+
+
 # A crop needing more room than this between plants is not going on a balcony,
 # whatever its group default says. Derived rather than hand-set: the group
 # defaults had citrus and tropicals flagged container-friendly, which is true
@@ -517,6 +577,8 @@ def build() -> dict:
                 "description": description,
                 # Which silhouette the 3D/AR scene draws for this crop.
                 "model": model,
+                # 1 = in almost every garden, 3 = niche. See popularity_of().
+                "popularity": popularity_of(crop_id),
             }
         )
 

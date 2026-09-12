@@ -107,6 +107,9 @@ export interface GrowingSpace {
   location: string;
   zip_code: string;
   plot: PlotSpec;
+  /** How far you can reach into a bed. Caps bed depth, and with it which
+   *  crops can be recommended at all. null = work it out from the plot. */
+  max_bed_depth_ft?: number | null;
   garden_type: GardenType;
   experience: ExperienceLevel;
   budget_usd: number;
@@ -192,6 +195,9 @@ export interface GenerateLayoutRequest {
   plot: PlotSpec;
   garden_type: GardenType;
   crops: { crop_id: string; plants: number }[];
+  /** Mirrors GrowingSpace.max_bed_depth_ft, so a regenerated layout keeps the
+   *  constraint the recommendations were filtered by. */
+  max_bed_depth_ft?: number | null;
 }
 
 export interface PlacedPlant {

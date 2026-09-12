@@ -31,7 +31,8 @@
       "image": "/crops/acorn-squash.svg",
       "color": "#4E6B3C",
       "description": "Compact winter squash; one fruit is a dinner for two.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 2
     },
     {
       "id": "almond",
@@ -51,7 +52,8 @@
       "image": "/crops/almond.svg",
       "color": "#9C7B4E",
       "description": "Close relative of the peach, with the same early-flowering risk.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "alpine-strawberry",
@@ -71,7 +73,8 @@
       "image": "/crops/alpine-strawberry.svg",
       "color": "#D33B4E",
       "description": "Tiny intense berries, non-stop, and tolerant of part shade.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 3
     },
     {
       "id": "amaranth-greens",
@@ -91,7 +94,8 @@
       "image": "/crops/amaranth-greens.svg",
       "color": "#9C4A6B",
       "description": "Grown for tender leaves in the heat; the grain type gets much taller.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 3
     },
     {
       "id": "anise-hyssop",
@@ -111,7 +115,8 @@
       "image": "/crops/anise-hyssop.svg",
       "color": "#8C6FB5",
       "description": "Liquorice-scented leaves, purple spikes, adored by pollinators.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "apple",
@@ -131,7 +136,8 @@
       "image": "/crops/apple.svg",
       "color": "#C5473C",
       "description": "Most varieties need a second tree nearby to set fruit.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "apricot",
@@ -151,7 +157,8 @@
       "image": "/crops/apricot.svg",
       "color": "#E0913F",
       "description": "Flowers very early, so a late frost can take the whole crop.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "armenian-cucumber",
@@ -171,7 +178,8 @@
       "image": "/crops/armenian-cucumber.svg",
       "color": "#7FA84A",
       "description": "Actually a melon; long ribbed fruit that shrugs off heat.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 3
     },
     {
       "id": "aronia",
@@ -191,7 +199,8 @@
       "image": "/crops/aronia.svg",
       "color": "#2B2233",
       "description": "Chokeberry \u2014 astringent fresh, excellent cooked, and trouble-free.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 3
     },
     {
       "id": "arugula",
@@ -211,7 +220,8 @@
       "image": "/crops/arugula.svg",
       "color": "#6BA368",
       "description": "Ready in a month, expensive in shops, and peppery enough to matter.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "asian-pear",
@@ -231,7 +241,8 @@
       "image": "/crops/asian-pear.svg",
       "color": "#D6C77A",
       "description": "Crisp and round, closer to an apple in texture.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "asparagus",
@@ -251,7 +262,8 @@
       "image": "/crops/asparagus.svg",
       "color": "#B4534B",
       "description": "Three years before a real harvest, then twenty more. The longest game here.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 1
     },
     {
       "id": "avocado",
@@ -271,7 +283,8 @@
       "image": "/crops/avocado.svg",
       "color": "#6E7F3E",
       "description": "Slow, large and frost-sensitive; grafted trees fruit far sooner than seedlings.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "banana",
@@ -291,7 +304,8 @@
       "image": "/crops/banana.svg",
       "color": "#E4CE4A",
       "description": "A giant herb, not a tree. Each stem fruits once and is then cut down.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 2
     },
     {
       "id": "banana-pepper",
@@ -311,7 +325,8 @@
       "image": "/crops/banana-pepper.svg",
       "color": "#E8D14A",
       "description": "Mild, tangy and productive; good pickled.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "barley",
@@ -331,7 +346,8 @@
       "image": "/crops/barley.svg",
       "color": "#CFB56A",
       "description": "Hardier than wheat and quicker off the ground.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "basil",
@@ -351,7 +367,8 @@
       "image": "/crops/basil.svg",
       "color": "#4F9D5B",
       "description": "Absurd value per square foot \u2014 supermarket packets are tiny and expensive.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "bay-laurel",
@@ -371,7 +388,8 @@
       "image": "/crops/bay-laurel.svg",
       "color": "#46664A",
       "description": "A slow evergreen tree in a pot; a handful of leaves lasts a year.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 3
     },
     {
       "id": "bee-balm",
@@ -391,7 +409,8 @@
       "image": "/crops/bee-balm.svg",
       "color": "#C2405C",
       "description": "Minty perennial for tea, and hummingbirds find it first.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "beefsteak-tomato",
@@ -411,7 +430,8 @@
       "image": "/crops/beefsteak-tomato.svg",
       "color": "#D14434",
       "description": "Big slicing fruit on a heavy vine. Wants the longest, warmest season you have.",
-      "model": "vine"
+      "model": "vine",
+      "popularity": 2
     },
     {
       "id": "beet",
@@ -431,7 +451,8 @@
       "image": "/crops/beet.svg",
       "color": "#8E3B58",
       "description": "Two crops in one \u2014 roots and the leaves, which are as good as chard.",
-      "model": "root"
+      "model": "root",
+      "popularity": 1
     },
     {
       "id": "bell-pepper",
@@ -451,7 +472,8 @@
       "image": "/crops/bell-pepper.svg",
       "color": "#D9A441",
       "description": "Sweet peppers ripen from green to red and get sweeter as they do.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 1
     },
     {
       "id": "bitter-melon",
@@ -471,7 +493,8 @@
       "image": "/crops/bitter-melon.svg",
       "color": "#7FA84A",
       "description": "Vigorous trellis vine; harvest young for less bitterness.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 3
     },
     {
       "id": "black-currant",
@@ -491,7 +514,8 @@
       "image": "/crops/black-currant.svg",
       "color": "#3B2340",
       "description": "Intense flavour and enormous vitamin C.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "black-eyed-peas",
@@ -511,7 +535,8 @@
       "image": "/crops/black-eyed-peas.svg",
       "color": "#E0D6BC",
       "description": "Heat- and drought-tolerant southern pea.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "blackberry",
@@ -531,7 +556,8 @@
       "image": "/crops/blackberry.svg",
       "color": "#8C2F4A",
       "description": "Thornless varieties exist and are worth seeking out.",
-      "model": "cane"
+      "model": "cane",
+      "popularity": 1
     },
     {
       "id": "blueberry",
@@ -551,7 +577,8 @@
       "image": "/crops/blueberry.svg",
       "color": "#4B6FA8",
       "description": "Needs genuinely acid soil \u2014 test first, or grow it in a container.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 1
     },
     {
       "id": "bok-choy",
@@ -571,7 +598,8 @@
       "image": "/crops/bok-choy.svg",
       "color": "#7FB069",
       "description": "Fast, compact and shade-tolerant \u2014 good for a second crop.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "borage",
@@ -591,7 +619,8 @@
       "image": "/crops/borage.svg",
       "color": "#5C7FC4",
       "description": "Cucumber-flavoured leaves and blue flowers bees cannot leave alone.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "boysenberry",
@@ -611,7 +640,8 @@
       "image": "/crops/boysenberry.svg",
       "color": "#8C2F4A",
       "description": "Blackberry-raspberry cross; large soft fruit on trailing canes.",
-      "model": "cane"
+      "model": "cane",
+      "popularity": 3
     },
     {
       "id": "broccoli",
@@ -631,7 +661,8 @@
       "image": "/crops/broccoli.svg",
       "color": "#4A7C4E",
       "description": "One main head, then weeks of side shoots if you keep cutting.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 1
     },
     {
       "id": "broccolini",
@@ -651,7 +682,8 @@
       "image": "/crops/broccolini.svg",
       "color": "#4E8C4A",
       "description": "All side shoots, no big head. Longer picking window than broccoli.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "brussels-sprouts",
@@ -671,7 +703,8 @@
       "image": "/crops/brussels-sprouts.svg",
       "color": "#5E8C4A",
       "description": "A long season crop that only gets sweet after frost.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 1
     },
     {
       "id": "buckwheat",
@@ -691,7 +724,8 @@
       "image": "/crops/buckwheat.svg",
       "color": "#E4DCC6",
       "description": "Fast cover crop that also makes flour and feeds bees.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "bush-beans",
@@ -711,7 +745,8 @@
       "image": "/crops/bush-beans.svg",
       "color": "#6DAA4E",
       "description": "One concentrated flush, no trellis. Sow a second batch three weeks later.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 1
     },
     {
       "id": "butterhead",
@@ -731,7 +766,8 @@
       "image": "/crops/butterhead.svg",
       "color": "#A8CF7A",
       "description": "Soft loose heads, quick to bolt in heat.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "butternut-squash",
@@ -751,7 +787,8 @@
       "image": "/crops/butternut-squash.svg",
       "color": "#C9A05E",
       "description": "Stores for months and tastes better for it.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 1
     },
     {
       "id": "cabbage",
@@ -771,7 +808,8 @@
       "image": "/crops/cabbage.svg",
       "color": "#8FBF7A",
       "description": "One big head per plant; stores for weeks in the cold.",
-      "model": "head"
+      "model": "head",
+      "popularity": 1
     },
     {
       "id": "calamondin",
@@ -791,7 +829,8 @@
       "image": "/crops/calamondin.svg",
       "color": "#E8912F",
       "description": "Sour ornamental citrus that fruits almost continuously indoors.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 3
     },
     {
       "id": "calendula",
@@ -811,7 +850,8 @@
       "image": "/crops/calendula.svg",
       "color": "#E8952E",
       "description": "Petals for salads and salves; flowers until hard frost.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "cantaloupe",
@@ -831,7 +871,8 @@
       "image": "/crops/cantaloupe.svg",
       "color": "#E0A05C",
       "description": "Ready when it slips from the stem and smells like itself.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 1
     },
     {
       "id": "cardoon",
@@ -851,7 +892,8 @@
       "image": "/crops/cardoon.svg",
       "color": "#B4534B",
       "description": "Artichoke relative grown for blanched stalks. Architectural and huge.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 3
     },
     {
       "id": "carrot",
@@ -871,7 +913,8 @@
       "image": "/crops/carrot.svg",
       "color": "#D97B29",
       "description": "Wants loose stone-free soil; a raised bed is close to ideal.",
-      "model": "root"
+      "model": "root",
+      "popularity": 1
     },
     {
       "id": "cauliflower",
@@ -891,7 +934,8 @@
       "image": "/crops/cauliflower.svg",
       "color": "#EDE6CF",
       "description": "The fussiest brassica \u2014 it wants steady moisture and cool weather throughout.",
-      "model": "head"
+      "model": "head",
+      "popularity": 1
     },
     {
       "id": "cayenne",
@@ -911,7 +955,8 @@
       "image": "/crops/cayenne.svg",
       "color": "#C22E22",
       "description": "Long thin chillies that dry well for flakes and powder.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "celeriac",
@@ -931,7 +976,8 @@
       "image": "/crops/celeriac.svg",
       "color": "#D8CBB0",
       "description": "Knobbly celery root; long season, worth it for winter soups.",
-      "model": "root"
+      "model": "root",
+      "popularity": 2
     },
     {
       "id": "celery",
@@ -951,7 +997,8 @@
       "image": "/crops/celery.svg",
       "color": "#9EBE6A",
       "description": "Thirsty and slow. Homegrown is darker, stronger and never stringy if watered.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 1
     },
     {
       "id": "celtuce",
@@ -971,7 +1018,8 @@
       "image": "/crops/celtuce.svg",
       "color": "#9EBE6A",
       "description": "Grown for a thick crisp stem rather than its leaves.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 3
     },
     {
       "id": "chamomile",
@@ -991,7 +1039,8 @@
       "image": "/crops/chamomile.svg",
       "color": "#EDE3B8",
       "description": "Daisy flowers for tea; German chamomile is the annual one.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "cherry-tomato",
@@ -1011,7 +1060,8 @@
       "image": "/crops/cherry-tomato.svg",
       "color": "#EF7A5C",
       "description": "Earlier and far more forgiving than a slicer, and it keeps cropping until frost.",
-      "model": "vine"
+      "model": "vine",
+      "popularity": 1
     },
     {
       "id": "chervil",
@@ -1031,7 +1081,8 @@
       "image": "/crops/chervil.svg",
       "color": "#86B06A",
       "description": "Delicate anise notes; prefers shade and cool weather.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "chestnut",
@@ -1051,7 +1102,8 @@
       "image": "/crops/chestnut.svg",
       "color": "#9C7B4E",
       "description": "Productive and enormous. Blight-resistant hybrids are the ones to plant.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "chia",
@@ -1071,7 +1123,8 @@
       "image": "/crops/chia.svg",
       "color": "#8C7FB5",
       "description": "Needs a long frost-free season to ripen seed.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "chickpeas",
@@ -1091,7 +1144,8 @@
       "image": "/crops/chickpeas.svg",
       "color": "#D6C48C",
       "description": "Two seeds a pod, so plant more than feels sensible.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "chinese-broccoli",
@@ -1111,7 +1165,8 @@
       "image": "/crops/chinese-broccoli.svg",
       "color": "#4E8C4A",
       "description": "Gai lan \u2014 stems and leaves both, slightly bitter.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "chives",
@@ -1131,7 +1186,8 @@
       "image": "/crops/chives.svg",
       "color": "#5E9B58",
       "description": "Perennial, ignores neglect, and flowers are edible too.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "cilantro",
@@ -1151,7 +1207,8 @@
       "image": "/crops/cilantro.svg",
       "color": "#6FBF73",
       "description": "Bolts fast in heat, so sow a little every few weeks rather than all at once.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "collard-greens",
@@ -1171,7 +1228,8 @@
       "image": "/crops/collard-greens.svg",
       "color": "#5E9B4C",
       "description": "Tougher and more heat-tolerant than kale.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "crabapple",
@@ -1191,7 +1249,8 @@
       "image": "/crops/crabapple.svg",
       "color": "#B8342C",
       "description": "Grown as a pollinator for other apples; the fruit makes excellent jelly.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "cranberry",
@@ -1211,7 +1270,8 @@
       "image": "/crops/cranberry.svg",
       "color": "#A61E2E",
       "description": "A low acid-loving mat; wants bog conditions, not standing water.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "cucumber",
@@ -1231,7 +1291,8 @@
       "image": "/crops/cucumber.svg",
       "color": "#4C8F52",
       "description": "Climbs happily on a trellis, which keeps the fruit clean and straight.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 1
     },
     {
       "id": "curry-leaf",
@@ -1251,7 +1312,8 @@
       "image": "/crops/curry-leaf.svg",
       "color": "#4E7A45",
       "description": "Tender tree, container-grown outside the tropics.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 3
     },
     {
       "id": "daikon",
@@ -1271,7 +1333,8 @@
       "image": "/crops/daikon.svg",
       "color": "#EDE7D8",
       "description": "Large mild winter radish; needs deep soil.",
-      "model": "root"
+      "model": "root",
+      "popularity": 3
     },
     {
       "id": "delicata-squash",
@@ -1291,7 +1354,8 @@
       "image": "/crops/delicata-squash.svg",
       "color": "#E0C88C",
       "description": "Thin edible skin, sweet flesh, shorter storage than most.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 2
     },
     {
       "id": "dill",
@@ -1311,7 +1375,8 @@
       "image": "/crops/dill.svg",
       "color": "#7FA858",
       "description": "Self-seeds readily and draws in beneficial insects.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "dwarf-apple",
@@ -1331,7 +1396,8 @@
       "image": "/crops/dwarf-apple.svg",
       "color": "#C94A3F",
       "description": "Fruits years earlier than a standard tree and stays pickable from the ground.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "edamame",
@@ -1351,7 +1417,8 @@
       "image": "/crops/edamame.svg",
       "color": "#8CBF5C",
       "description": "Soybeans picked green. Harvest the whole plant at once.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "eggplant",
@@ -1371,7 +1438,8 @@
       "image": "/crops/eggplant.svg",
       "color": "#6B4A83",
       "description": "Glossy fruit on a sturdy bush. Wants heat and hates wet feet.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 1
     },
     {
       "id": "walking-onion",
@@ -1391,7 +1459,8 @@
       "image": "/crops/walking-onion.svg",
       "color": "#C9B47A",
       "description": "Sets bulbils on top that flop over and replant themselves.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 3
     },
     {
       "id": "elderberry",
@@ -1411,7 +1480,8 @@
       "image": "/crops/elderberry.svg",
       "color": "#2E2440",
       "description": "Big shrub, big crops, and the raw berries must be cooked.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "elephant-garlic",
@@ -1431,7 +1501,8 @@
       "image": "/crops/elephant-garlic.svg",
       "color": "#C9B47A",
       "description": "Huge mild cloves; botanically closer to a leek.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 3
     },
     {
       "id": "endive",
@@ -1451,7 +1522,8 @@
       "image": "/crops/endive.svg",
       "color": "#BFD98C",
       "description": "Bitter frilly heads; blanch the centre to soften the flavour.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "epazote",
@@ -1471,7 +1543,8 @@
       "image": "/crops/epazote.svg",
       "color": "#5A8C4A",
       "description": "Pungent Mexican herb cooked with beans.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "escarole",
@@ -1491,7 +1564,8 @@
       "image": "/crops/escarole.svg",
       "color": "#A8C46B",
       "description": "Broad-leaved endive, better cooked than raw.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "fava-beans",
@@ -1511,7 +1585,8 @@
       "image": "/crops/fava-beans.svg",
       "color": "#A8B86F",
       "description": "Sown in cold soil; also fixes nitrogen for whatever follows.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "fennel",
@@ -1531,7 +1606,8 @@
       "image": "/crops/fennel.svg",
       "color": "#9EBE6A",
       "description": "Sweet aniseed bulb; bolts if it dries out or gets warm.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 2
     },
     {
       "id": "fig",
@@ -1551,7 +1627,8 @@
       "image": "/crops/fig.svg",
       "color": "#6B4A6B",
       "description": "Two crops a year in warm climates; cuts back hard and forgives it.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "flat-leaf-parsley",
@@ -1571,7 +1648,8 @@
       "image": "/crops/flat-leaf-parsley.svg",
       "color": "#4C8C4A",
       "description": "Stronger flavour than curly, and easier to chop.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "flax",
@@ -1591,7 +1669,8 @@
       "image": "/crops/flax.svg",
       "color": "#7C9BC9",
       "description": "Blue-flowered, grown for seed or fibre.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "flour-corn",
@@ -1611,7 +1690,8 @@
       "image": "/crops/flour-corn.svg",
       "color": "#C9A85E",
       "description": "Grown to grind, not to eat fresh.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "garlic",
@@ -1631,7 +1711,8 @@
       "image": "/crops/garlic.svg",
       "color": "#CFC6A8",
       "description": "In the ground almost a year, but it asks nothing of you for most of it.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 1
     },
     {
       "id": "garlic-chives",
@@ -1651,7 +1732,8 @@
       "image": "/crops/garlic-chives.svg",
       "color": "#6BA05C",
       "description": "Flat leaves with a mild garlic flavour; spreads if you let it.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "ginger",
@@ -1671,7 +1753,8 @@
       "image": "/crops/ginger.svg",
       "color": "#D9B87A",
       "description": "Needs warmth, humidity and patience; grows well in a big pot.",
-      "model": "mound"
+      "model": "mound",
+      "popularity": 2
     },
     {
       "id": "artichoke",
@@ -1691,7 +1774,8 @@
       "image": "/crops/artichoke.svg",
       "color": "#7C8F6B",
       "description": "Edible flower buds from a silver thistle. Perennial in mild winters.",
-      "model": "head"
+      "model": "head",
+      "popularity": 1
     },
     {
       "id": "goji",
@@ -1711,7 +1795,8 @@
       "image": "/crops/goji.svg",
       "color": "#C7452E",
       "description": "Arching shrub; needs pruning or it becomes a thicket.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 3
     },
     {
       "id": "golden-beet",
@@ -1731,7 +1816,8 @@
       "image": "/crops/golden-beet.svg",
       "color": "#D9A93C",
       "description": "Sweeter and milder than red, and it does not stain everything.",
-      "model": "root"
+      "model": "root",
+      "popularity": 2
     },
     {
       "id": "gooseberry",
@@ -1751,7 +1837,8 @@
       "image": "/crops/gooseberry.svg",
       "color": "#9FBF5C",
       "description": "Tart early fruit on a thorny bush; tolerates some shade.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "amaranth-grain",
@@ -1771,7 +1858,8 @@
       "image": "/crops/amaranth-grain.svg",
       "color": "#A8365C",
       "description": "Spectacular seed heads, and the young leaves are edible too.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "grape",
@@ -1791,7 +1879,8 @@
       "image": "/crops/grape.svg",
       "color": "#6E4B8C",
       "description": "Needs a real trellis and annual pruning; then decades of fruit.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 1
     },
     {
       "id": "grape-tomato",
@@ -1811,7 +1900,8 @@
       "image": "/crops/grape-tomato.svg",
       "color": "#E0603F",
       "description": "Sweet, firm and almost unkillable in a container.",
-      "model": "vine"
+      "model": "vine",
+      "popularity": 2
     },
     {
       "id": "grapefruit",
@@ -1831,7 +1921,8 @@
       "image": "/crops/grapefruit.svg",
       "color": "#E5A06B",
       "description": "Big tree, long ripening, and it wants heat.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "green-beans",
@@ -1851,7 +1942,8 @@
       "image": "/crops/green-beans.svg",
       "color": "#5C9B4A",
       "description": "Pole beans crop for weeks from a small footprint. The best use of vertical space.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 1
     },
     {
       "id": "green-onion",
@@ -1871,7 +1963,8 @@
       "image": "/crops/green-onion.svg",
       "color": "#5BA86B",
       "description": "Regrows from the base after cutting, so one sowing lasts months.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 1
     },
     {
       "id": "ground-cherry",
@@ -1891,7 +1984,8 @@
       "image": "/crops/ground-cherry.svg",
       "color": "#D9B04A",
       "description": "Sweet husked berries that drop when ripe. Sprawls more than it stands.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 3
     },
     {
       "id": "guava",
@@ -1911,7 +2005,8 @@
       "image": "/crops/guava.svg",
       "color": "#C9D66B",
       "description": "Fast-growing and heavy-cropping in frost-free gardens.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "habanero",
@@ -1931,7 +2026,8 @@
       "image": "/crops/habanero.svg",
       "color": "#E0762A",
       "description": "Fiercely hot and slow to ripen; needs a long warm season.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "hardy-kiwi",
@@ -1951,7 +2047,8 @@
       "image": "/crops/hardy-kiwi.svg",
       "color": "#9AB06A",
       "description": "Smooth grape-sized fruit, eaten skin and all, and far more cold tolerant.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 2
     },
     {
       "id": "hazelnut",
@@ -1971,7 +2068,8 @@
       "image": "/crops/hazelnut.svg",
       "color": "#9C7B4E",
       "description": "More a large shrub than a tree; plant two for pollination.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "holy-basil",
@@ -1991,7 +2089,8 @@
       "image": "/crops/holy-basil.svg",
       "color": "#486F42",
       "description": "Tulsi \u2014 grown as much for tea as for cooking.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "honeyberry",
@@ -2011,7 +2110,8 @@
       "image": "/crops/honeyberry.svg",
       "color": "#4A5B9E",
       "description": "Haskap \u2014 the earliest fruit of the year and extremely cold hardy.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 3
     },
     {
       "id": "honeydew",
@@ -2031,7 +2131,8 @@
       "image": "/crops/honeydew.svg",
       "color": "#CFD98C",
       "description": "Longer season than a cantaloupe and less forgiving.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 2
     },
     {
       "id": "hops",
@@ -2051,7 +2152,8 @@
       "image": "/crops/hops.svg",
       "color": "#9DB35E",
       "description": "Climbs twenty feet a season and dies back to the crown each winter.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 3
     },
     {
       "id": "horseradish",
@@ -2071,7 +2173,8 @@
       "image": "/crops/horseradish.svg",
       "color": "#E8E0CE",
       "description": "Plant it once and you have it forever, whether you want it or not.",
-      "model": "root"
+      "model": "root",
+      "popularity": 2
     },
     {
       "id": "iceberg",
@@ -2091,7 +2194,8 @@
       "image": "/crops/iceberg.svg",
       "color": "#C6DCA0",
       "description": "Slow and thirsty for what it gives back, but it is what a wedge salad needs.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "jalapeno",
@@ -2111,7 +2215,8 @@
       "image": "/crops/jalapeno.svg",
       "color": "#3F7D45",
       "description": "Reliable, compact and hot. One plant covers most households.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 1
     },
     {
       "id": "japanese-eggplant",
@@ -2131,7 +2236,8 @@
       "image": "/crops/japanese-eggplant.svg",
       "color": "#5A3A73",
       "description": "Slender, thin-skinned and quicker than a globe type.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "jicama",
@@ -2151,7 +2257,8 @@
       "image": "/crops/jicama.svg",
       "color": "#DCCFAE",
       "description": "Crisp sweet root on a long vine. Only the root is edible.",
-      "model": "mound"
+      "model": "mound",
+      "popularity": 3
     },
     {
       "id": "jostaberry",
@@ -2171,7 +2278,8 @@
       "image": "/crops/jostaberry.svg",
       "color": "#42304A",
       "description": "Gooseberry-currant cross, thornless and vigorous.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 3
     },
     {
       "id": "jujube",
@@ -2191,7 +2299,8 @@
       "image": "/crops/jujube.svg",
       "color": "#A5502F",
       "description": "Drought-proof and productive where little else fruits.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 3
     },
     {
       "id": "kabocha",
@@ -2211,7 +2320,8 @@
       "image": "/crops/kabocha.svg",
       "color": "#3F5E3A",
       "description": "Dense and chestnut-sweet; a sprawling vine.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 2
     },
     {
       "id": "kale",
@@ -2231,7 +2341,8 @@
       "image": "/crops/kale.svg",
       "color": "#3D6B48",
       "description": "Pick the lower leaves and it keeps going for months, right through frost.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "kiwi",
@@ -2251,7 +2362,8 @@
       "image": "/crops/kiwi.svg",
       "color": "#8FA35C",
       "description": "Vigorous and heavy \u2014 the structure matters more than the plant.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 2
     },
     {
       "id": "kohlrabi",
@@ -2271,7 +2383,8 @@
       "image": "/crops/kohlrabi.svg",
       "color": "#9BBF6F",
       "description": "Swollen stem above ground, crisp and mild. Pick before it turns woody.",
-      "model": "head"
+      "model": "head",
+      "popularity": 2
     },
     {
       "id": "komatsuna",
@@ -2291,7 +2404,8 @@
       "image": "/crops/komatsuna.svg",
       "color": "#6BB255",
       "description": "Japanese mustard spinach \u2014 quick and unfussy.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "kumquat",
@@ -2311,7 +2425,8 @@
       "image": "/crops/kumquat.svg",
       "color": "#E98E2B",
       "description": "Eaten whole, skin and all. The most container-friendly citrus.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "lacinato-kale",
@@ -2331,7 +2446,8 @@
       "image": "/crops/lacinato-kale.svg",
       "color": "#3F6B4F",
       "description": "Dark strappy leaves, better texture than curly kale.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "lavender",
@@ -2351,7 +2467,8 @@
       "image": "/crops/lavender.svg",
       "color": "#8C7FB5",
       "description": "Culinary as well as ornamental. Needs sharp drainage and sun.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "leek",
@@ -2371,7 +2488,8 @@
       "image": "/crops/leek.svg",
       "color": "#9EBE6A",
       "description": "Long season, but it sits happily in frozen ground until you want it.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 1
     },
     {
       "id": "lemon",
@@ -2391,7 +2509,8 @@
       "image": "/crops/lemon.svg",
       "color": "#E8D14A",
       "description": "Crops almost year-round in mild climates and takes to a pot well.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "lemon-balm",
@@ -2411,7 +2530,8 @@
       "image": "/crops/lemon-balm.svg",
       "color": "#7FB25C",
       "description": "Lemony and perennial; self-seeds everywhere if allowed.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 2
     },
     {
       "id": "lemon-cucumber",
@@ -2431,7 +2551,8 @@
       "image": "/crops/lemon-cucumber.svg",
       "color": "#E0D45C",
       "description": "Round, pale and mild \u2014 easier on the stomach than a slicer.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 2
     },
     {
       "id": "lemongrass",
@@ -2451,7 +2572,8 @@
       "image": "/crops/lemongrass.svg",
       "color": "#A8B884",
       "description": "A clumping grass; cut stalks as you need them.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "lentils",
@@ -2471,7 +2593,8 @@
       "image": "/crops/lentils.svg",
       "color": "#C4874A",
       "description": "Low yield for the space, but drought-hardy and easy.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "lettuce",
@@ -2491,7 +2614,8 @@
       "image": "/crops/lettuce.svg",
       "color": "#7CC47F",
       "description": "Cut-and-come-again leaves for weeks. The easiest win in a small bed.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "lima-beans",
@@ -2511,7 +2635,8 @@
       "image": "/crops/lima-beans.svg",
       "color": "#C6CFA0",
       "description": "Needs a long warm season to fill its pods.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 2
     },
     {
       "id": "lime",
@@ -2531,7 +2656,8 @@
       "image": "/crops/lime.svg",
       "color": "#9BC24A",
       "description": "More cold-tender than lemon; bring it inside where winters bite.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "lingonberry",
@@ -2551,7 +2677,8 @@
       "image": "/crops/lingonberry.svg",
       "color": "#B8232F",
       "description": "Evergreen ground cover with tart red fruit; happy in part shade.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 3
     },
     {
       "id": "loquat",
@@ -2571,7 +2698,8 @@
       "image": "/crops/loquat.svg",
       "color": "#E2A93F",
       "description": "Flowers in winter, fruits in spring; evergreen and handsome.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "lovage",
@@ -2591,7 +2719,8 @@
       "image": "/crops/lovage.svg",
       "color": "#5C8C4A",
       "description": "Tastes like intense celery and returns every year, taller each time.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "luffa",
@@ -2611,7 +2740,8 @@
       "image": "/crops/luffa.svg",
       "color": "#8CA85C",
       "description": "Eat it young or dry it into a sponge. Needs a very long season.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 3
     },
     {
       "id": "kaffir-lime-leaf",
@@ -2631,7 +2761,8 @@
       "image": "/crops/kaffir-lime-leaf.svg",
       "color": "#E8A33D",
       "description": "Grown for its double leaves more than its fruit.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 3
     },
     {
       "id": "malabar-spinach",
@@ -2651,7 +2782,8 @@
       "image": "/crops/malabar-spinach.svg",
       "color": "#4C7F5E",
       "description": "A climbing heat-lover for when real spinach has bolted.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 3
     },
     {
       "id": "mandarin",
@@ -2671,7 +2803,8 @@
       "image": "/crops/mandarin.svg",
       "color": "#E58A2A",
       "description": "Easy-peel, cold-hardiest of the sweet citrus.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "mango",
@@ -2691,7 +2824,8 @@
       "image": "/crops/mango.svg",
       "color": "#E5853A",
       "description": "Needs a genuinely tropical climate or a very large greenhouse.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "marigold",
@@ -2711,7 +2845,8 @@
       "image": "/crops/marigold.svg",
       "color": "#E0761F",
       "description": "Planted as much for pest confusion as for the petals.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "marjoram",
@@ -2731,7 +2866,8 @@
       "image": "/crops/marjoram.svg",
       "color": "#86A06F",
       "description": "Sweeter and gentler than oregano; tender in hard winters.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "millet",
@@ -2751,7 +2887,8 @@
       "image": "/crops/millet.svg",
       "color": "#D9C06B",
       "description": "Fast, heat- and drought-tolerant small grain.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "mini-sweet-pepper",
@@ -2771,7 +2908,8 @@
       "image": "/crops/mini-sweet-pepper.svg",
       "color": "#D9452E",
       "description": "Small sweet peppers in quantity \u2014 heavy croppers for their size.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "mint",
@@ -2791,7 +2929,8 @@
       "image": "/crops/mint.svg",
       "color": "#5FBF8A",
       "description": "Vigorous to the point of invasive. Keep it in a pot, always.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "mizuna",
@@ -2811,7 +2950,8 @@
       "image": "/crops/mizuna.svg",
       "color": "#86C25A",
       "description": "Feathery mild mustard, cuts and regrows.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "mulberry",
@@ -2831,7 +2971,8 @@
       "image": "/crops/mulberry.svg",
       "color": "#3B1F33",
       "description": "Fruits heavily and young. Plant it well away from paths and cars.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "mustard-greens",
@@ -2851,7 +2992,8 @@
       "image": "/crops/mustard-greens.svg",
       "color": "#7FB94A",
       "description": "Peppery and fast. Bolts the moment it gets warm.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "mache",
@@ -2871,7 +3013,8 @@
       "image": "/crops/mache.svg",
       "color": "#7FB06A",
       "description": "Corn salad \u2014 tiny nutty rosettes that survive real winter.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 3
     },
     {
       "id": "napa-cabbage",
@@ -2891,7 +3034,8 @@
       "image": "/crops/napa-cabbage.svg",
       "color": "#C6D68C",
       "description": "Upright barrel-shaped head; the one for kimchi.",
-      "model": "head"
+      "model": "head",
+      "popularity": 2
     },
     {
       "id": "nasturtium",
@@ -2911,7 +3055,8 @@
       "image": "/crops/nasturtium.svg",
       "color": "#E0713C",
       "description": "Leaves, flowers and seed pods all edible and peppery. Trails anywhere.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 2
     },
     {
       "id": "nectarine",
@@ -2931,7 +3076,8 @@
       "image": "/crops/nectarine.svg",
       "color": "#E07A4A",
       "description": "A fuzzless peach, with the same habits and the same diseases.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "new-zealand-spinach",
@@ -2951,7 +3097,8 @@
       "image": "/crops/new-zealand-spinach.svg",
       "color": "#74A85C",
       "description": "Sprawling, salty-sweet and unbothered by summer.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 3
     },
     {
       "id": "oakleaf",
@@ -2971,7 +3118,8 @@
       "image": "/crops/oakleaf.svg",
       "color": "#9C7A4A",
       "description": "Lobed tender leaves that stand picking over and over.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "oats",
@@ -2991,7 +3139,8 @@
       "image": "/crops/oats.svg",
       "color": "#DCC583",
       "description": "Easy to grow, tedious to hull.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "olive",
@@ -3011,7 +3160,8 @@
       "image": "/crops/olive.svg",
       "color": "#6B7350",
       "description": "Needs curing before it is edible, and a mild winter to survive.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "onion",
@@ -3031,7 +3181,8 @@
       "image": "/crops/onion.svg",
       "color": "#C9B47A",
       "description": "Cheap to buy, but homegrown keeps far longer. Day length decides the variety.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 1
     },
     {
       "id": "orach",
@@ -3051,7 +3202,8 @@
       "image": "/crops/orach.svg",
       "color": "#A8456B",
       "description": "Magenta mountain spinach; holds longer than spinach before bolting.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 3
     },
     {
       "id": "orange",
@@ -3071,7 +3223,8 @@
       "image": "/crops/orange.svg",
       "color": "#E8A33D",
       "description": "Sweet oranges need real summer heat to develop sugar.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "oregano",
@@ -3091,7 +3244,8 @@
       "image": "/crops/oregano.svg",
       "color": "#6F8C55",
       "description": "Drought-tolerant perennial that gets stronger in poor soil.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 1
     },
     {
       "id": "padron",
@@ -3111,7 +3265,8 @@
       "image": "/crops/padron.svg",
       "color": "#4E8C42",
       "description": "Picked small and fried; left on the plant they turn fiery.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "papaya",
@@ -3131,7 +3286,8 @@
       "image": "/crops/papaya.svg",
       "color": "#E79B3F",
       "description": "Fruits within a year from seed, and dies young.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "parsley",
@@ -3151,7 +3307,8 @@
       "image": "/crops/parsley.svg",
       "color": "#4C9152",
       "description": "Slow to start, then productive for a full year in mild climates.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "parsnip",
@@ -3171,7 +3328,8 @@
       "image": "/crops/parsnip.svg",
       "color": "#E6DBBE",
       "description": "Slow to germinate, slow to grow, and much sweeter after a frost.",
-      "model": "root"
+      "model": "root",
+      "popularity": 2
     },
     {
       "id": "passionfruit",
@@ -3191,7 +3349,8 @@
       "image": "/crops/passionfruit.svg",
       "color": "#5B3A6E",
       "description": "Fast tender vine with extraordinary flowers.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 3
     },
     {
       "id": "pattypan",
@@ -3211,7 +3370,8 @@
       "image": "/crops/pattypan.svg",
       "color": "#DCD9A8",
       "description": "Scalloped little squash; pick them small.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 2
     },
     {
       "id": "pawpaw",
@@ -3231,7 +3391,8 @@
       "image": "/crops/pawpaw.svg",
       "color": "#B7B463",
       "description": "North America's largest native fruit \u2014 custardy, and it needs shade when young.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 3
     },
     {
       "id": "peach",
@@ -3251,7 +3412,8 @@
       "image": "/crops/peach.svg",
       "color": "#E58B52",
       "description": "Fast to fruit, short-lived, and needs annual pruning to stay productive.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "peanuts",
@@ -3271,7 +3433,8 @@
       "image": "/crops/peanuts.svg",
       "color": "#CBB089",
       "description": "Pegs down into the soil and ripens underground. Needs a long warm season.",
-      "model": "mound"
+      "model": "mound",
+      "popularity": 3
     },
     {
       "id": "pear",
@@ -3291,7 +3454,8 @@
       "image": "/crops/pear.svg",
       "color": "#C9BE5E",
       "description": "Longer-lived than apple and just as dependent on a pollinator.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "pecan",
@@ -3311,7 +3475,8 @@
       "image": "/crops/pecan.svg",
       "color": "#9C7B4E",
       "description": "Needs a long hot summer and decades of patience.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "peppermint",
@@ -3331,7 +3496,8 @@
       "image": "/crops/peppermint.svg",
       "color": "#4F7F45",
       "description": "Stronger and cooler than spearmint; spreads just as aggressively.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "persimmon",
@@ -3351,7 +3517,8 @@
       "image": "/crops/persimmon.svg",
       "color": "#DB7A2E",
       "description": "Astringent types must go completely soft; fuyu types can be eaten crisp.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "pickling-cucumber",
@@ -3371,7 +3538,8 @@
       "image": "/crops/pickling-cucumber.svg",
       "color": "#46803A",
       "description": "Short, bumpy fruit bred for jars. Pick every other day.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 1
     },
     {
       "id": "pineapple",
@@ -3391,7 +3559,8 @@
       "image": "/crops/pineapple.svg",
       "color": "#D9B23F",
       "description": "One fruit per plant after two years, from a rosette of spiny leaves.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "plum",
@@ -3411,7 +3580,8 @@
       "image": "/crops/plum.svg",
       "color": "#5A3550",
       "description": "Reliable and heavy-cropping; thin the fruit or branches break.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "poblano",
@@ -3431,7 +3601,8 @@
       "image": "/crops/poblano.svg",
       "color": "#3F6B3A",
       "description": "Mild chilli with walls thick enough to stuff and roast.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "pomegranate",
@@ -3451,7 +3622,8 @@
       "image": "/crops/pomegranate.svg",
       "color": "#B33040",
       "description": "Drought-tolerant and happiest with a long hot summer.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "popcorn",
@@ -3471,7 +3643,8 @@
       "image": "/crops/popcorn.svg",
       "color": "#E0C24A",
       "description": "Left on the stalk to dry hard; stores for years.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 2
     },
     {
       "id": "potato",
@@ -3491,7 +3664,8 @@
       "image": "/crops/potato.svg",
       "color": "#C9A06B",
       "description": "Cheap to buy, but a good crop in poor soil and forgiving of neglect.",
-      "model": "mound"
+      "model": "mound",
+      "popularity": 1
     },
     {
       "id": "pumpkin",
@@ -3511,7 +3685,8 @@
       "image": "/crops/pumpkin.svg",
       "color": "#D9772E",
       "description": "Needs real room. Grow it for the season rather than the savings.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 1
     },
     {
       "id": "purple-carrot",
@@ -3531,7 +3706,8 @@
       "image": "/crops/purple-carrot.svg",
       "color": "#6B3E7A",
       "description": "Same growing, more money per pound, and it keeps its colour raw.",
-      "model": "root"
+      "model": "root",
+      "popularity": 2
     },
     {
       "id": "purslane",
@@ -3551,7 +3727,8 @@
       "image": "/crops/purslane.svg",
       "color": "#8CC46A",
       "description": "Succulent, lemony and drought-proof. Often pulled up as a weed.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 3
     },
     {
       "id": "quince",
@@ -3571,7 +3748,8 @@
       "image": "/crops/quince.svg",
       "color": "#D4C15C",
       "description": "Hard and aromatic; inedible raw, remarkable cooked.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "quinoa",
@@ -3591,7 +3769,8 @@
       "image": "/crops/quinoa.svg",
       "color": "#C4707A",
       "description": "Needs cool nights to set seed properly.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "radicchio",
@@ -3611,7 +3790,8 @@
       "image": "/crops/radicchio.svg",
       "color": "#A32F4E",
       "description": "Red chicory that only colours up properly in the cold.",
-      "model": "head"
+      "model": "head",
+      "popularity": 2
     },
     {
       "id": "radish",
@@ -3631,7 +3811,8 @@
       "image": "/crops/radish.svg",
       "color": "#D14B60",
       "description": "Four weeks from seed to plate. The fastest thing in the garden.",
-      "model": "root"
+      "model": "root",
+      "popularity": 1
     },
     {
       "id": "ramps",
@@ -3651,7 +3832,8 @@
       "image": "/crops/ramps.svg",
       "color": "#C9B47A",
       "description": "Wild leeks. Years to establish, and shade is a requirement not a tolerance.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 3
     },
     {
       "id": "raspberry",
@@ -3671,7 +3853,8 @@
       "image": "/crops/raspberry.svg",
       "color": "#8C2F4A",
       "description": "Spreads by suckers and fruits on canes. Expensive to buy, easy to grow.",
-      "model": "cane"
+      "model": "cane",
+      "popularity": 1
     },
     {
       "id": "red-cabbage",
@@ -3691,7 +3874,8 @@
       "image": "/crops/red-cabbage.svg",
       "color": "#7A4A80",
       "description": "Slower than green cabbage and holds its colour when cooked with acid.",
-      "model": "head"
+      "model": "head",
+      "popularity": 2
     },
     {
       "id": "red-currant",
@@ -3711,7 +3895,8 @@
       "image": "/crops/red-currant.svg",
       "color": "#C43A3A",
       "description": "Translucent strings of fruit, heavy crops, very cold hardy.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "red-onion",
@@ -3731,7 +3916,8 @@
       "image": "/crops/red-onion.svg",
       "color": "#C9B47A",
       "description": "Milder than a yellow onion and stores nearly as well.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 1
     },
     {
       "id": "rhubarb",
@@ -3751,7 +3937,8 @@
       "image": "/crops/rhubarb.svg",
       "color": "#B4534B",
       "description": "Crops for decades from one crown. Leaves are poisonous, stalks are not.",
-      "model": "stalk"
+      "model": "stalk",
+      "popularity": 1
     },
     {
       "id": "roma-tomato",
@@ -3771,7 +3958,8 @@
       "image": "/crops/roma-tomato.svg",
       "color": "#C4402F",
       "description": "Dense, low-seed paste tomato \u2014 the one to grow if you cook sauce.",
-      "model": "vine"
+      "model": "vine",
+      "popularity": 1
     },
     {
       "id": "romaine",
@@ -3791,7 +3979,8 @@
       "image": "/crops/romaine.svg",
       "color": "#7FB84A",
       "description": "Upright crisp hearts; more heat-tolerant than butterhead.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "romanesco",
@@ -3811,7 +4000,8 @@
       "image": "/crops/romanesco.svg",
       "color": "#A8C356",
       "description": "Fractal lime-green head; grows like a slow cauliflower.",
-      "model": "head"
+      "model": "head",
+      "popularity": 2
     },
     {
       "id": "hibiscus-roselle",
@@ -3831,7 +4021,8 @@
       "image": "/crops/hibiscus-roselle.svg",
       "color": "#B52F42",
       "description": "Grown for the tart red calyces that make hibiscus tea.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "rosemary",
@@ -3851,7 +4042,8 @@
       "image": "/crops/rosemary.svg",
       "color": "#5E7A66",
       "description": "Woody evergreen shrub in mild climates; hates wet roots.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 1
     },
     {
       "id": "runner-beans",
@@ -3871,7 +4063,8 @@
       "image": "/crops/runner-beans.svg",
       "color": "#C23A3A",
       "description": "Tall, scarlet-flowered and edible \u2014 the prettiest way to screen a fence.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 2
     },
     {
       "id": "rutabaga",
@@ -3891,7 +4084,8 @@
       "image": "/crops/rutabaga.svg",
       "color": "#C9A24E",
       "description": "Sweet dense winter keeper. Slower than a turnip.",
-      "model": "root"
+      "model": "root",
+      "popularity": 2
     },
     {
       "id": "rye",
@@ -3911,7 +4105,8 @@
       "image": "/crops/rye.svg",
       "color": "#C4AE72",
       "description": "The toughest cereal; often sown to hold soil over winter.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "sage",
@@ -3931,7 +4126,8 @@
       "image": "/crops/sage.svg",
       "color": "#9EAE94",
       "description": "Silvery perennial; one plant is more than any kitchen needs.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 1
     },
     {
       "id": "savoy-cabbage",
@@ -3951,7 +4147,8 @@
       "image": "/crops/savoy-cabbage.svg",
       "color": "#6FA05C",
       "description": "Crinkled leaves, sweeter after a frost.",
-      "model": "head"
+      "model": "head",
+      "popularity": 2
     },
     {
       "id": "serrano",
@@ -3971,7 +4168,8 @@
       "image": "/crops/serrano.svg",
       "color": "#4E8C3A",
       "description": "Hotter and thinner-walled than a jalape\u00f1o, and just as easy.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "sesame",
@@ -3991,7 +4189,8 @@
       "image": "/crops/sesame.svg",
       "color": "#E6DCC4",
       "description": "Heat-loving; pods shatter the moment they are ripe.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "shallot",
@@ -4011,7 +4210,8 @@
       "image": "/crops/shallot.svg",
       "color": "#C9B47A",
       "description": "One planted bulb becomes a cluster. Expensive in shops.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 1
     },
     {
       "id": "peas",
@@ -4031,7 +4231,8 @@
       "image": "/crops/peas.svg",
       "color": "#83B85C",
       "description": "Sweetest within minutes of picking, which is the whole argument for growing them.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 1
     },
     {
       "id": "shishito",
@@ -4051,7 +4252,8 @@
       "image": "/crops/shishito.svg",
       "color": "#5E9B45",
       "description": "Blister them whole. Mostly mild, with the occasional hot surprise.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 2
     },
     {
       "id": "shiso",
@@ -4071,7 +4273,8 @@
       "image": "/crops/shiso.svg",
       "color": "#7A4A6B",
       "description": "Perilla \u2014 minty, anise-like, and it self-sows freely.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "snap-peas",
@@ -4091,7 +4294,8 @@
       "image": "/crops/snap-peas.svg",
       "color": "#8CBF63",
       "description": "Eat pod and all. The first thing worth picking each spring.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 1
     },
     {
       "id": "snow-peas",
@@ -4111,7 +4315,8 @@
       "image": "/crops/snow-peas.svg",
       "color": "#A8CF7A",
       "description": "Flat pods for stir-fries; pick before the peas swell.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 1
     },
     {
       "id": "sorghum",
@@ -4131,7 +4336,8 @@
       "image": "/crops/sorghum.svg",
       "color": "#B5623A",
       "description": "Drought-hardy grain, or a syrup crop from the sweet types.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "sorrel",
@@ -4151,7 +4357,8 @@
       "image": "/crops/sorrel.svg",
       "color": "#8CB84A",
       "description": "Sharp lemony leaves from a plant that comes back each year.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 3
     },
     {
       "id": "sour-cherry",
@@ -4171,7 +4378,8 @@
       "image": "/crops/sour-cherry.svg",
       "color": "#B22B34",
       "description": "Smaller, self-fertile and far easier than a sweet cherry.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "spaghetti-squash",
@@ -4191,7 +4399,8 @@
       "image": "/crops/spaghetti-squash.svg",
       "color": "#D9C46B",
       "description": "Flesh pulls into strands when roasted.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 2
     },
     {
       "id": "spearmint",
@@ -4211,7 +4420,8 @@
       "image": "/crops/spearmint.svg",
       "color": "#4F7F45",
       "description": "The mint for tea and tabbouleh. Contain the roots.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 1
     },
     {
       "id": "spinach",
@@ -4231,7 +4441,8 @@
       "image": "/crops/spinach.svg",
       "color": "#2F6B3A",
       "description": "Fast, cold-hardy and expensive to buy \u2014 one of the best value crops there is.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "squash-blossom",
@@ -4251,7 +4462,8 @@
       "image": "/crops/squash-blossom.svg",
       "color": "#E8C247",
       "description": "The male flowers of any summer squash, picked before they set fruit.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 3
     },
     {
       "id": "stevia",
@@ -4271,7 +4483,8 @@
       "image": "/crops/stevia.svg",
       "color": "#6FA85C",
       "description": "Leaves are intensely sweet fresh or dried.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "strawberry",
@@ -4291,7 +4504,8 @@
       "image": "/crops/strawberry.svg",
       "color": "#D8434F",
       "description": "Everbearing types fruit through the season. Runners give you free plants.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "sugar-pumpkin",
@@ -4311,7 +4525,8 @@
       "image": "/crops/sugar-pumpkin.svg",
       "color": "#D9822E",
       "description": "Small pie pumpkin \u2014 actually worth cooking, unlike the big carving sort.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 1
     },
     {
       "id": "savory",
@@ -4331,7 +4546,8 @@
       "image": "/crops/savory.svg",
       "color": "#7A9B5A",
       "description": "Peppery and traditional with beans.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 3
     },
     {
       "id": "sunchoke",
@@ -4351,7 +4567,8 @@
       "image": "/crops/sunchoke.svg",
       "color": "#C2A878",
       "description": "Jerusalem artichoke \u2014 enormous, unkillable, and it will spread.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "sunflower",
@@ -4371,7 +4588,8 @@
       "image": "/crops/sunflower.svg",
       "color": "#E8B93C",
       "description": "Seeds for you or the birds, and shade for whatever needs it.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 1
     },
     {
       "id": "cherry",
@@ -4391,7 +4609,8 @@
       "image": "/crops/cherry.svg",
       "color": "#9E2135",
       "description": "You will be sharing it with birds unless you net it.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 1
     },
     {
       "id": "sweet-corn",
@@ -4411,7 +4630,8 @@
       "image": "/crops/sweet-corn.svg",
       "color": "#E8C247",
       "description": "Plant in a block, not a row, or the ears fill unevenly. Sweetest straight off the stalk.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 1
     },
     {
       "id": "sweet-onion",
@@ -4431,7 +4651,8 @@
       "image": "/crops/sweet-onion.svg",
       "color": "#C9B47A",
       "description": "Low-sulphur and juicy; poor keeper, eat it first.",
-      "model": "spike"
+      "model": "spike",
+      "popularity": 1
     },
     {
       "id": "sweet-potato",
@@ -4451,7 +4672,8 @@
       "image": "/crops/sweet-potato.svg",
       "color": "#C4622E",
       "description": "Sprawling vines, heat-loving, and the leaves are edible too.",
-      "model": "mound"
+      "model": "mound",
+      "popularity": 1
     },
     {
       "id": "swiss-chard",
@@ -4471,7 +4693,8 @@
       "image": "/crops/swiss-chard.svg",
       "color": "#C4553B",
       "description": "Harvest outer stalks all season. Handles both heat and frost.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 1
     },
     {
       "id": "tarragon",
@@ -4491,7 +4714,8 @@
       "image": "/crops/tarragon.svg",
       "color": "#7FA05C",
       "description": "French tarragon has to be grown from division, not seed.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 2
     },
     {
       "id": "tatsoi",
@@ -4511,7 +4735,8 @@
       "image": "/crops/tatsoi.svg",
       "color": "#4E8C48",
       "description": "Flat spoon-leaved rosette; very cold hardy.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "tayberry",
@@ -4531,7 +4756,8 @@
       "image": "/crops/tayberry.svg",
       "color": "#8C2F4A",
       "description": "Aromatic and sharp; too soft to travel, which is why shops rarely have it.",
-      "model": "cane"
+      "model": "cane",
+      "popularity": 3
     },
     {
       "id": "thai-basil",
@@ -4551,7 +4777,8 @@
       "image": "/crops/thai-basil.svg",
       "color": "#6B5A7A",
       "description": "Anise-scented and sturdier in heat than sweet basil.",
-      "model": "herb"
+      "model": "herb",
+      "popularity": 2
     },
     {
       "id": "thai-chilli",
@@ -4571,7 +4798,8 @@
       "image": "/crops/thai-chilli.svg",
       "color": "#C4231C",
       "description": "Tiny, very hot, and ornamental enough for a patio pot.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "thyme",
@@ -4591,7 +4819,8 @@
       "image": "/crops/thyme.svg",
       "color": "#7A8C63",
       "description": "Tiny leaves, huge shelf price, and it thrives on being ignored.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 1
     },
     {
       "id": "tomatillo",
@@ -4611,7 +4840,8 @@
       "image": "/crops/tomatillo.svg",
       "color": "#8CA84A",
       "description": "Husked fruit for salsa verde. Plant two \u2014 a lone plant sets almost nothing.",
-      "model": "vine"
+      "model": "vine",
+      "popularity": 1
     },
     {
       "id": "tomato",
@@ -4631,7 +4861,8 @@
       "image": "/crops/tomato.svg",
       "color": "#E2543F",
       "description": "High-value staple that anchors most household gardens. Needs staking and steady water.",
-      "model": "vine"
+      "model": "vine",
+      "popularity": 1
     },
     {
       "id": "turmeric",
@@ -4651,7 +4882,8 @@
       "image": "/crops/turmeric.svg",
       "color": "#E09A33",
       "description": "Same conditions as ginger, and the same very long wait.",
-      "model": "mound"
+      "model": "mound",
+      "popularity": 2
     },
     {
       "id": "turnip",
@@ -4671,7 +4903,8 @@
       "image": "/crops/turnip.svg",
       "color": "#E4DCCB",
       "description": "Roots and tops both usable; best picked small.",
-      "model": "root"
+      "model": "root",
+      "popularity": 1
     },
     {
       "id": "turnip-greens",
@@ -4691,7 +4924,8 @@
       "image": "/crops/turnip-greens.svg",
       "color": "#6BA84F",
       "description": "Grown for the tops rather than the root.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 2
     },
     {
       "id": "viola",
@@ -4711,7 +4945,8 @@
       "image": "/crops/viola.svg",
       "color": "#7A5CA8",
       "description": "Candied or scattered on a plate; happiest in cool weather.",
-      "model": "bush"
+      "model": "bush",
+      "popularity": 3
     },
     {
       "id": "walnut",
@@ -4731,7 +4966,8 @@
       "image": "/crops/walnut.svg",
       "color": "#9C7B4E",
       "description": "Huge, long-lived, and it poisons many plants beneath it.",
-      "model": "tree"
+      "model": "tree",
+      "popularity": 2
     },
     {
       "id": "watercress",
@@ -4751,7 +4987,8 @@
       "image": "/crops/watercress.svg",
       "color": "#5CA86E",
       "description": "Wants constantly wet roots; happiest in a tray of water.",
-      "model": "rosette"
+      "model": "rosette",
+      "popularity": 3
     },
     {
       "id": "watermelon",
@@ -4771,7 +5008,8 @@
       "image": "/crops/watermelon.svg",
       "color": "#D9425C",
       "description": "Wants heat, room and patience. Thin to two fruit per vine.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 1
     },
     {
       "id": "watermelon-radish",
@@ -4791,7 +5029,8 @@
       "image": "/crops/watermelon-radish.svg",
       "color": "#C2426B",
       "description": "Green outside, magenta in. Slower and milder than a breakfast radish.",
-      "model": "root"
+      "model": "root",
+      "popularity": 2
     },
     {
       "id": "wheat",
@@ -4811,7 +5050,8 @@
       "image": "/crops/wheat.svg",
       "color": "#D9BE72",
       "description": "A garden-scale patch yields a loaf or two \u2014 grown for interest more than value.",
-      "model": "grass"
+      "model": "grass",
+      "popularity": 3
     },
     {
       "id": "white-currant",
@@ -4831,7 +5071,8 @@
       "image": "/crops/white-currant.svg",
       "color": "#E4DCC0",
       "description": "Sweeter and milder than red; the same plant otherwise.",
-      "model": "shrub"
+      "model": "shrub",
+      "popularity": 3
     },
     {
       "id": "yacon",
@@ -4851,7 +5092,8 @@
       "image": "/crops/yacon.svg",
       "color": "#C98F55",
       "description": "Sweet crunchy tubers that taste closer to fruit than potato.",
-      "model": "mound"
+      "model": "mound",
+      "popularity": 3
     },
     {
       "id": "yardlong-beans",
@@ -4871,7 +5113,8 @@
       "image": "/crops/yardlong-beans.svg",
       "color": "#5E9B45",
       "description": "Thrives in heat that stops ordinary beans.",
-      "model": "climber"
+      "model": "climber",
+      "popularity": 3
     },
     {
       "id": "yellow-squash",
@@ -4891,7 +5134,8 @@
       "image": "/crops/yellow-squash.svg",
       "color": "#E0C24A",
       "description": "Crookneck summer squash, as prolific as zucchini.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 1
     },
     {
       "id": "zucchini",
@@ -4911,7 +5155,8 @@
       "image": "/crops/zucchini.svg",
       "color": "#3F7A3D",
       "description": "Absurdly productive. Two plants will feed a street.",
-      "model": "sprawl"
+      "model": "sprawl",
+      "popularity": 1
     }
   ]
 }

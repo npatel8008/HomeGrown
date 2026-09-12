@@ -90,6 +90,7 @@ export default function RecommendationsPage() {
     const result = await generateLayout({
       plot: state.space.plot,
       garden_type: state.space.garden_type,
+      max_bed_depth_ft: state.space.max_bed_depth_ft ?? null,
       // Same builder the planner and the voice control use, so any per-crop
       // counts set by voice survive a regeneration from this page.
       crops: layoutCropsFor({ selectedCropIds: selectedIds, plantCounts: state.plantCounts }, data),

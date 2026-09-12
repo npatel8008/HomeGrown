@@ -35,6 +35,7 @@ from models.schemas import (
 from services import crop_reasons
 from services.climate import ClimateProfile, climate_profile
 from services.crop_repository import all_crops
+from services.layout_generator import largest_plantable_spacing_ft, plantable_bed_area_ft2
 from services.location import resolve as resolve_location
 
 # Climate carries real weight now that it is measured data rather than a guess.
@@ -53,6 +54,41 @@ WATER_LOAD = {"low": 0.2, "medium": 0.5, "medium-high": 0.75, "high": 1.0}
 
 # Fraction of the plot that is walkways / bed edges rather than planting area.
 PATH_OVERHEAD = 0.35
+
+# Shelf packing cannot fill a bed completely: each row is as deep as the
+# largest crop in it, and the leftover strip at the end of a row goes unused.
+# Measured across five plot geometries the packer achieved 70-96% of the bed
+# area it was given (median ~86%). Allocating against 100% of it meant the
+# crops at the end of the list — twice, the second-ranked crop — were promised
+# ground the packer then could not find, and landed in `unplaced`.
+PACKING_EFFICIENCY = 0.8
+
+# How many DIFFERENT crops a household will actually look after, by plot size.
+#
+# The allocator's job was to fill the ground, and with 245 crops to choose from
+# it filled a 40x30 plot with 47 different ones. Nobody gardens like that: you
+# get a handful of things you eat, not a botanical collection. So variety is
+# capped, which also means the plants that do get recommended are the ones that
+# scored highest rather than whatever was left at the bottom of the list.
+MIN_VARIETY = 4
+MAX_VARIETY = 14
+#: Square feet of bed per distinct crop, before the caps apply.
+SQFT_PER_CROP = 14.0
+
+# A crop nobody in the household eats has to clear a much higher bar than one
+# they asked for. Without this, cheap-per-square-foot oddities — chervil, mâche,
+# watercress — outranked vegetables the household actually named, because they
+# score well on space and shelf price and demand is only a third of the total.
+FILLER_SCORE_FLOOR = 48.0
+#: And at most this share of the list may be crops with no household demand.
+MAX_FILLER_SHARE = 0.4
+#: A filler also has to be something people actually grow. crops.json rates
+#: every crop 1 (in almost every garden) to 3 (niche); unprompted suggestions
+#: stop at 2. Asked for by name, a niche crop is still recommended.
+MAX_FILLER_POPULARITY = 2
+#: Unprompted fillers from any one category, so leftover ground does not become
+#: four kinds of legume. Crops the household named are never limited this way.
+MAX_FILLERS_PER_CATEGORY = 2
 
 # Rough pounds of produce one person eats per week during the season. The
 # number of weeks now comes from the location's real frost-free window.
@@ -254,6 +290,16 @@ def _normalise(values: Dict[str, float]) -> Dict[str, float]:
 
 def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
     crops = all_crops()
+
+    # The widest spacing this plot can physically hold. Anything above it is
+    # excluded outright below: with 245 crops the library now contains walnuts
+    # and mango trees, and scoring alone would happily rank one into a 12x8
+    # raised bed for the packer to silently drop.
+    max_spacing = largest_plantable_spacing_ft(
+        request.space.plot.width_ft,
+        request.space.plot.length_ft,
+        request.space.max_bed_depth_ft,
+    )
     demand = _demand_lookup(request)
 
     # Resolve where the household actually is, and what growing there is like.
@@ -290,7 +336,15 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
     scored.sort(key=lambda row: -row[0])
 
     total_area = request.space.plot.width_ft * request.space.plot.length_ft
-    plantable_area = total_area * (1 - PATH_OVERHEAD)
+    # Ask the layout generator how much bed it will actually build, rather than
+    # assuming a flat path overhead. PATH_OVERHEAD is kept as the fallback for
+    # a plot too small to build a bed in at all.
+    plantable_area = PACKING_EFFICIENCY * plantable_bed_area_ft2(
+        request.space.plot.width_ft,
+        request.space.plot.length_ft,
+        request.space.garden_type,
+        request.space.max_bed_depth_ft,
+    ) or total_area * (1 - PATH_OVERHEAD) * PACKING_EFFICIENCY
     budget = request.space.budget_usd
 
     # Weeks this climate can actually supply produce — used for both the
@@ -309,6 +363,16 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
     budget_left = budget
     rank = 1
 
+    variety_cap = int(
+        max(MIN_VARIETY, min(MAX_VARIETY, plantable_area / SQFT_PER_CROP))
+    )
+    filler_cap = max(1, int(variety_cap * MAX_FILLER_SHARE))
+    fillers_used = 0
+    fillers_by_category: Dict[str, int] = {}
+
+    # A container or balcony garden can only hold crops that grow in pots.
+    pots_only = request.space.garden_type.value in ("containers", "balcony")
+
     for total, crop, breakdown in scored:
         fits_season, season_note = season_notes[crop["id"]]
 
@@ -320,6 +384,65 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
                 )
             )
             continue
+        if pots_only and not crop.get("container_compatible", False):
+            skipped.append(
+                SkippedCrop(
+                    name=crop["name"],
+                    crop_id=crop["id"],
+                    reason="Does not grow well in a container.",
+                    kind="space",
+                )
+            )
+            continue
+
+        # Feasibility before merit: "it does not fit" is more useful than
+        # "it scored badly", and it is the honest reason.
+        if crop["spacing_ft"] > max_spacing + 1e-6:
+            skipped.append(
+                SkippedCrop(
+                    name=crop["name"],
+                    crop_id=crop["id"],
+                    reason="Needs %.1f ft between plants; your space allows %.1f ft."
+                    % (crop["spacing_ft"], max_spacing),
+                    kind="space",
+                )
+            )
+            continue
+
+        if len(recommendations) >= variety_cap:
+            skipped.append(
+                SkippedCrop(
+                    name=crop["name"],
+                    crop_id=crop["id"],
+                    reason="Your plot is already planted with %d crops." % variety_cap,
+                    kind="space",
+                )
+            )
+            continue
+
+        wanted_by_household = demand.get(crop["id"], 0.0) > 0
+        if not wanted_by_household:
+            too_niche = crop.get("popularity", 2) > MAX_FILLER_POPULARITY
+            category_full = (
+                fillers_by_category.get(crop["category"], 0) >= MAX_FILLERS_PER_CATEGORY
+            )
+            if (
+                too_niche
+                or category_full
+                or total < FILLER_SCORE_FLOOR
+                or fillers_used >= filler_cap
+            ):
+                skipped.append(
+                    SkippedCrop(
+                        name=crop["name"],
+                        crop_id=crop["id"],
+                        reason="Nobody in the household asked for it, and stronger "
+                        "options fit the same ground.",
+                        kind="demand",
+                    )
+                )
+                continue
+
         if total < 25:
             skipped.append(
                 SkippedCrop(
@@ -388,6 +511,11 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
             )
         )
         rank += 1
+        if not wanted_by_household:
+            fillers_used += 1
+            fillers_by_category[crop["category"]] = (
+                fillers_by_category.get(crop["category"], 0) + 1
+            )
         area_left -= used_area
         budget_left -= cost
         if area_left < 1 or budget_left < 1:
