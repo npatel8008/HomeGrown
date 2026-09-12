@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { generateLayout } from "@/lib/api";
+import { layoutCropsFor } from "@/lib/garden-commands";
 import { summarizeSelection } from "@/lib/selection";
 import { useGardenStore } from "@/lib/store";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -60,9 +61,9 @@ export default function RecommendationsPage() {
     const result = await generateLayout({
       plot: state.space.plot,
       garden_type: state.space.garden_type,
-      crops: data.recommendations
-        .filter((crop) => selectedIds.includes(crop.crop_id))
-        .map((crop) => ({ crop_id: crop.crop_id, plants: crop.plants_recommended })),
+      // Same builder the planner and the voice control use, so any per-crop
+      // counts set by voice survive a regeneration from this page.
+      crops: layoutCropsFor({ selectedCropIds: selectedIds, plantCounts: state.plantCounts }, data),
     });
     update({ layout: result.data, offlineMode: result.usedFallback });
     setBusy(false);

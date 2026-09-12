@@ -51,6 +51,9 @@ export interface GardenState {
   recommendations: RecommendCropsResponse | null;
   /** Crop ids the user has chosen to actually plant. */
   selectedCropIds: string[];
+  /** Per-crop plant counts that override the recommender's suggestion.
+   *  Written by voice commands and read when building the layout request. */
+  plantCounts: Record<string, number>;
   layout: GenerateLayoutResponse | null;
   /** True once the API answered with bundled data instead of a live backend. */
   offlineMode: boolean;
@@ -67,6 +70,7 @@ const EMPTY_STATE: GardenState = {
   climate: null,
   recommendations: null,
   selectedCropIds: [],
+  plantCounts: {},
   layout: null,
   offlineMode: false,
 };

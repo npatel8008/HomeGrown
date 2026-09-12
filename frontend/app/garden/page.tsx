@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { generateLayout } from "@/lib/api";
+import { layoutCropsFor } from "@/lib/garden-commands";
 import { sqft } from "@/lib/format";
 import { useGardenStore } from "@/lib/store";
 import type { PlacedPlant } from "@/lib/types";
@@ -13,6 +14,7 @@ import { GardenGrid, PlantLegend } from "@/components/garden/GardenGrid";
 import { PlantDetailsPanel } from "@/components/garden/PlantDetailsPanel";
 import { ArrowRightIcon, CubeIcon } from "@/components/ui/Icons";
 import { OfflineNotice } from "@/components/ui/OfflineNotice";
+import { VoiceGardenControl } from "@/components/voice/VoiceGardenControl";
 
 export default function GardenPlanPage() {
   const { state, update, hydrated } = useGardenStore();
@@ -26,12 +28,12 @@ export default function GardenPlanPage() {
     const result = await generateLayout({
       plot: state.space.plot,
       garden_type: state.space.garden_type,
-      crops: state.recommendations.recommendations
-        .filter(
-          (crop) =>
-            state.selectedCropIds.length === 0 || state.selectedCropIds.includes(crop.crop_id),
-        )
-        .map((crop) => ({ crop_id: crop.crop_id, plants: crop.plants_recommended })),
+      // Shared with the voice control, so a spoken edit and a clicked one
+      // build the identical request.
+      crops: layoutCropsFor(
+        { selectedCropIds: state.selectedCropIds, plantCounts: state.plantCounts },
+        state.recommendations,
+      ),
     });
     update({ layout: result.data, offlineMode: result.usedFallback });
     setSelected(null);
@@ -103,6 +105,7 @@ export default function GardenPlanPage() {
             <GardenGrid layout={layout} selectedId={selected?.id ?? null} onSelect={setSelected} />
 
             <div className="space-y-4 lg:sticky lg:top-24">
+              <VoiceGardenControl />
               <PlantDetailsPanel plant={selected} onClose={() => setSelected(null)} />
               <PlantLegend layout={layout} />
             </div>

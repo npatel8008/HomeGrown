@@ -457,3 +457,46 @@ class CareSummaryResponse(BaseModel):
 
 class DeleteResult(BaseModel):
     deleted: Dict[str, int]
+
+
+# ---------------------------------------------------------------------------
+# SYSTEM 5 — voice control of the garden
+# ---------------------------------------------------------------------------
+
+class VoiceCommandKind(str, Enum):
+    ADD_CROP = "add_crop"
+    REMOVE_CROP = "remove_crop"
+    SET_CROP_COUNT = "set_crop_count"
+    ADJUST_CROP_COUNT = "adjust_crop_count"
+    SCALE_CROP_COUNT = "scale_crop_count"
+    CLEAR_CROPS = "clear_crops"
+    SELECT_ALL_CROPS = "select_all_crops"
+    UNDO = "undo"
+
+
+class GardenCommand(BaseModel):
+    """One validated edit. `crop_id` is always a real id from crops.json."""
+
+    kind: VoiceCommandKind
+    crop_id: Optional[str] = None
+    crop: Optional[str] = None
+    plants: Optional[int] = None
+    delta: Optional[int] = None
+    factor: Optional[float] = None
+
+
+class TranscribeResponse(BaseModel):
+    text: str
+    generated_by: str
+
+
+class InterpretRequest(BaseModel):
+    transcript: str
+
+
+class InterpretResponse(BaseModel):
+    transcript: str
+    commands: List[GardenCommand] = Field(default_factory=list)
+    descriptions: List[str] = Field(default_factory=list)
+    understood: bool = False
+    generated_by: str = "rules"

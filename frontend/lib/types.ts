@@ -394,3 +394,39 @@ export interface CareSummaryResponse {
   total_harvested_lbs: number;
   total_harvested_value_usd: number;
 }
+
+/* ------------------------------------------------------------------ */
+/* SYSTEM 5 — voice control (backend/services/garden_voice.py)         */
+/* ------------------------------------------------------------------ */
+
+export type VoiceCommandKind =
+  | "add_crop"
+  | "remove_crop"
+  | "set_crop_count"
+  | "adjust_crop_count"
+  | "scale_crop_count"
+  | "clear_crops"
+  | "select_all_crops"
+  | "undo";
+
+export interface GardenCommand {
+  kind: VoiceCommandKind;
+  crop_id?: string | null;
+  crop?: string | null;
+  plants?: number | null;
+  delta?: number | null;
+  factor?: number | null;
+}
+
+export interface TranscribeResponse {
+  text: string;
+  generated_by: string;
+}
+
+export interface InterpretResponse {
+  transcript: string;
+  commands: GardenCommand[];
+  descriptions: string[];
+  understood: boolean;
+  generated_by: string;
+}

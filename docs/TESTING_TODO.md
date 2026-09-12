@@ -127,6 +127,24 @@ browser. Nothing below has run on real hardware.
 - **Landscape rotation** mid-session, and backgrounding the app and returning —
   the camera track should resume or fail with a message, not a black screen.
 
+## 10. Voice control, with a real ElevenLabs key
+
+The interpretation half has 29 tests and needs no key. The **transcription half
+has never run against ElevenLabs** — there was no API key available.
+
+- Set `ELEVENLABS_API_KEY` and confirm `/api/health` reports
+  `speech_to_text: elevenlabs`, then hold the button and speak.
+- **Verify the response field name.** `services/elevenlabs_stt.py` reads `text`
+  and falls back to `transcription`; if the API returns something else the
+  transcript comes back empty and the UI will say it heard nothing. This is the
+  single most likely thing to be wrong.
+- **Audio format.** Chrome records webm/opus, iOS Safari records mp4. Both are
+  sent with a matching filename extension; confirm Scribe accepts each.
+- Check the fallback chain by unsetting the key: browser speech recognition
+  should take over (Chrome yes, Firefox no), and the text box always works.
+- Try it in a **noisy room** — that is where push-to-talk earns itself, and
+  where transcription quality actually gets decided.
+
 ---
 
 ## Worth testing if there is time
@@ -149,8 +167,11 @@ browser. Nothing below has run on real hardware.
   client function (`deleteMyData()` in `lib/api-me.ts`) both exist and are
   tested, but nothing on the account page calls them. Wire it up before anyone
   asks how to delete their data.
-- **Voice is not started.** The AR half of `AGENT_PROMPT_AR_VOICE.md` is built
-  (`/garden/ar`); the ElevenLabs half is not.
+- **Voice is not wired into the AR view.** It lives on the garden plan page;
+  saying "add basil" while looking at the garden through the camera is the
+  obvious next step and is not built.
+- **No spoken replies.** Confirmations are on-screen text only; ElevenLabs
+  text-to-speech is not wired up.
 - **AR does not yet write to the care record.** Tapping a plant in AR shows its
   details but cannot log a watering — that link between the two features is
   still open.
