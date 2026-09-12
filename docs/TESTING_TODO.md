@@ -102,6 +102,31 @@ localStorage and *says so* — the Today page should show the "not switched on"
 copy rather than an empty care record. A silent empty state here looks exactly
 like data loss.
 
+## 9. The AR view, on real phones
+
+Verified so far: the garden composites over a camera feed, the device-orientation
+camera rig anchors it in world space, both scales place correctly, and the
+camera-denied and motion-denied fallbacks render. All of that was driven with a
+**synthetic camera stream and synthetic orientation events** in a desktop
+browser. Nothing below has run on real hardware.
+
+- **iOS Safari.** The motion permission prompt only appears from a user gesture
+  — confirm the "Start AR" tap produces it. Check Settings → Safari → Motion &
+  Orientation Access when no prompt appears at all; that makes events silently
+  never arrive, and the app should fall back to drag-to-look rather than freeze.
+- **Android Chrome.** Orientation events arrive without a prompt; confirm the
+  garden is stable and not mirrored or 90° out, especially in landscape.
+- **Drift.** Compass-derived heading wanders. Stand still for a minute and see
+  how far the garden creeps; "Move here" is the escape hatch.
+- **Does it hold still?** The real test: place it, walk around it, turn away and
+  back. It should stay where you put it.
+- **Life-size scale.** Needs a few metres of room — confirm a 12x8 ft plot reads
+  as believably person-sized outdoors, not toy-sized or enormous.
+- **Thermals and battery.** Camera plus WebGL is the hottest thing this app
+  does. Run it for five minutes and watch for throttling.
+- **Landscape rotation** mid-session, and backgrounding the app and returning —
+  the camera track should resume or fail with a message, not a black screen.
+
 ---
 
 ## Worth testing if there is time
@@ -124,7 +149,11 @@ like data loss.
   client function (`deleteMyData()` in `lib/api-me.ts`) both exist and are
   tested, but nothing on the account page calls them. Wire it up before anyone
   asks how to delete their data.
-- **AR and voice are not started.** See `AGENT_PROMPT_AR_VOICE.md`.
+- **Voice is not started.** The AR half of `AGENT_PROMPT_AR_VOICE.md` is built
+  (`/garden/ar`); the ElevenLabs half is not.
+- **AR does not yet write to the care record.** Tapping a plant in AR shows its
+  details but cannot log a watering — that link between the two features is
+  still open.
 - **`fallback.json` does not cover `/api/me/*`.** Offline mode has no bundled
   per-account data, by design — there is no such thing as a signed-in user
   offline. Worth knowing before testing offline behaviour.

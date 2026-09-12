@@ -64,10 +64,15 @@ export default function Garden3DPage() {
         title="Walk through your garden"
         description="Rotate, zoom and pan. Click any plant for its harvest timeline and value."
         actions={
-          <Link href="/garden" className="btn-secondary">
+          <>
+            <Link href="/garden/ar" className="btn-primary">
+              See it in the room
+            </Link>
+            <Link href="/garden" className="btn-secondary">
             <GridIcon className="h-4 w-4" />
-            2D planner
-          </Link>
+              2D planner
+            </Link>
+          </>
         }
       />
 

@@ -18,6 +18,7 @@ const LINKS = [
   { href: "/recommendations", label: "Recommendations" },
   { href: "/garden", label: "Garden Plan" },
   { href: "/garden/3d", label: "3D Garden" },
+  { href: "/garden/ar", label: "AR" },
   { href: "/today", label: "Today" },
 ];
 

@@ -72,3 +72,28 @@ cd ../frontend && npm ci
   network those fall back to their offline paths and the UI says so.
 - `IFM_API_KEY` in `backend/.env` is optional; it upgrades ingredient extraction
   and the crop rationales from heuristics to K2.
+
+## The AR view
+
+`/garden/ar` puts the garden in the room through the rear camera. It needs, in
+order: an https origin (the tunnel), a signed-in session when Auth0 is
+configured, and a generated layout.
+
+On the phone: **Start AR** → allow camera → allow motion → point at the floor →
+**Place garden**. Toggle **Tabletop** (about 1:12, fits on a desk — use this
+indoors) or **Life-size**, and **Move here** to re-drop it where you are
+looking.
+
+What it does and does not do: the camera only *rotates* with the phone, so the
+garden stays put in the room when you turn, which is the effect that sells it.
+There is no SLAM and no depth, so walking forward does not bring you closer and
+plants draw over real objects rather than behind them. That is the same trick
+Pokémon Go's basic AR mode uses.
+
+Every permission degrades instead of dead-ending: camera refused falls back to
+the ordinary 3D garden with a reason, and motion refused switches to
+drag-to-look. Both paths say what is missing.
+
+**Auth0 callback URLs**: the AR route is behind sign-in, so the current tunnel
+URL must be in the Auth0 application's Allowed Callback URLs, Logout URLs and
+Web Origins, with `APP_BASE_URL` matching — see docs/TESTING_TODO.md item 7.
