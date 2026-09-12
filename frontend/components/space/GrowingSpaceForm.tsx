@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { cx } from "@/lib/format";
 import type { ExperienceLevel, GardenType, GrowingSpace, WaterAccess } from "@/lib/types";
 import { CameraIcon } from "@/components/ui/Icons";
@@ -70,6 +72,48 @@ function OptionGrid<T extends string>({
   );
 }
 
+/**
+ * A plot dimension.
+ *
+ * The box has to stay clearable while you retype it, but an empty box is
+ * `Number("") === 0`, and writing that to the store poisons every request that
+ * carries the plot — the schema requires > 0. So the draft text lives here and
+ * only a valid number is committed; on blur the box snaps back to what was
+ * actually stored.
+ */
+function DimensionInput({
+  label,
+  value,
+  onCommit,
+}: {
+  label: string;
+  value: number;
+  onCommit: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+
+  // Keep up with changes made elsewhere (e.g. "Use demo space").
+  useEffect(() => setDraft(String(value)), [value]);
+
+  return (
+    <input
+      aria-label={label}
+      className="input"
+      type="number"
+      inputMode="numeric"
+      min={1}
+      max={200}
+      value={draft}
+      onChange={(event) => {
+        setDraft(event.target.value);
+        const parsed = Number(event.target.value);
+        if (Number.isFinite(parsed) && parsed > 0 && parsed <= 200) onCommit(parsed);
+      }}
+      onBlur={() => setDraft(String(value))}
+    />
+  );
+}
+
 export function GrowingSpaceForm({
   space,
   onChange,
@@ -85,24 +129,16 @@ export function GrowingSpaceForm({
       <div>
         <span className="label">Plot size</span>
         <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
-          <input
-            aria-label="Plot width in feet"
-            className="input"
-            type="number"
-            min={1}
-            max={200}
+          <DimensionInput
+            label="Plot width in feet"
             value={space.plot.width_ft}
-            onChange={(event) => setPlot({ width_ft: Number(event.target.value) })}
+            onCommit={(width_ft) => setPlot({ width_ft })}
           />
           <span className="text-sm text-ink-faint">×</span>
-          <input
-            aria-label="Plot length in feet"
-            className="input"
-            type="number"
-            min={1}
-            max={200}
+          <DimensionInput
+            label="Plot length in feet"
             value={space.plot.length_ft}
-            onChange={(event) => setPlot({ length_ft: Number(event.target.value) })}
+            onCommit={(length_ft) => setPlot({ length_ft })}
           />
           <span className="rounded-xl border border-line bg-cream-deep px-3 py-2.5 text-sm text-ink-muted">
             feet

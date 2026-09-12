@@ -70,6 +70,31 @@ export interface GardenState {
   layoutOffline: boolean;
 }
 
+/**
+ * Repair stored state the API would reject.
+ *
+ * Clearing a plot dimension in the form used to persist `Number("") === 0`,
+ * and the schema requires > 0 — so every garden save 422'd, silently, forever.
+ * Browsers already holding a zero need correcting on load; fixing only the
+ * input would leave them stuck.
+ */
+function healState(state: GardenState): GardenState {
+  const dim = (value: number, fallbackValue: number) =>
+    Number.isFinite(value) && value > 0 ? Math.min(200, value) : fallbackValue;
+  return {
+    ...state,
+    space: {
+      ...state.space,
+      plot: {
+        ...state.space.plot,
+        width_ft: dim(state.space.plot?.width_ft, 12),
+        length_ft: dim(state.space.plot?.length_ft, 8),
+        unit: state.space.plot?.unit || "ft",
+      },
+    },
+  };
+}
+
 const EMPTY_STATE: GardenState = {
   householdSize: 2,
   meals: [],
@@ -108,7 +133,7 @@ export function GardenStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setState({ ...EMPTY_STATE, ...(JSON.parse(raw) as GardenState) });
+      if (raw) setState(healState({ ...EMPTY_STATE, ...(JSON.parse(raw) as GardenState) }));
     } catch {
       // Corrupt or unavailable storage just means we start fresh.
     }

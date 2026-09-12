@@ -92,6 +92,21 @@ export function fetchSavedGarden() {
 }
 
 export function saveGarden(garden: Partial<SavedGarden>) {
+  // The plot can legitimately be mid-edit in the UI; the schema still requires
+  // positive dimensions. Never let a transient value break the save.
+  if (garden.plot) {
+    const dim = (value: number, fallbackValue: number) =>
+      Number.isFinite(value) && value > 0 ? Math.min(200, value) : fallbackValue;
+    garden = {
+      ...garden,
+      plot: {
+        ...garden.plot,
+        width_ft: dim(garden.plot.width_ft, 12),
+        length_ft: dim(garden.plot.length_ft, 8),
+        unit: garden.plot.unit || "ft",
+      },
+    };
+  }
   return call<SavedGardenOut>("/garden", { method: "PUT", body: JSON.stringify(garden) });
 }
 
