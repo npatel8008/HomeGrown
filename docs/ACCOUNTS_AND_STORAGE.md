@@ -122,3 +122,6 @@ Be aware of these before demoing:
 The first real run should be: sign in, generate a layout, mark a task done,
 then sign in as a second account and confirm the first account's garden is not
 visible.
+
+The full hand-testing checklist, in priority order, is in
+**[TESTING_TODO.md](TESTING_TODO.md)**.

@@ -22,7 +22,7 @@ export default async function AccountPage() {
       <PageHeader
         eyebrow="Account"
         title="Your GardenAI account"
-        description="You're signed in with Auth0. Garden plans still live in this browser until cloud save is wired up."
+        description="You're signed in with Auth0. Your garden plan and care record are saved to your account."
       />
 
       <section className="card mt-8 max-w-xl p-6 sm:p-8">

@@ -77,7 +77,9 @@ Auth0 handles sign-in; MongoDB stores each account's garden, plantings and care
 record under `/api/me/*`. The backend takes the user id from a verified token
 and never from the request, so one account cannot read or write another's data
 — see **[docs/ACCOUNTS_AND_STORAGE.md](docs/ACCOUNTS_AND_STORAGE.md)** for the
-security model, the setup, and what the 30 isolation tests do and do not cover.
+security model and the setup, and
+**[docs/TESTING_TODO.md](docs/TESTING_TODO.md)** for what still has to be tested
+by hand against a real cluster, a real tenant and a real phone.
 
 Both are optional: with neither configured the app runs exactly as before, on
 localStorage, and says so.
