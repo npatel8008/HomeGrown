@@ -9,8 +9,9 @@
  *
  * >>> REPLACE ME <<<
  * Swap the localStorage read/write in `useEffect` for Supabase reads/writes
- * keyed by user id. The shape of `GardenState` is already close to a row per
- * section: households, food_profiles, growing_spaces, recommendations, layouts.
+ * keyed by Auth0 `user.sub`. The shape of `GardenState` is already close to a
+ * row per section: households, food_profiles, growing_spaces, recommendations,
+ * layouts.
  */
 
 import {

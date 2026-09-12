@@ -123,9 +123,11 @@ Three things were needed to make K2-Think reliable, all in
 
 ## Running it locally
 
-You need **Python 3.9+** and **Node 18.18+**. No database and no network
+You need **Python 3.9+** and **Node 20+**. No database and no network
 access required — the demo runs fully offline. An IFM API key is optional and
-upgrades two steps from placeholder to real model output.
+upgrades two steps from placeholder to real model output. Auth0 is optional
+too: without its env vars the app stays public; with them, the garden flow
+requires a signed-in user.
 
 ### 1. Backend
 
@@ -152,6 +154,18 @@ npm run dev
 ```
 
 Open <http://localhost:3000>.
+
+To turn on Auth0, copy `frontend/.env.local.example` to `frontend/.env.local`
+and fill in the `AUTH0_*` values from a Regular Web Application in the
+[Auth0 Dashboard](https://manage.auth0.com/). Register:
+
+- Callback: `http://localhost:3000/auth/callback`
+- Logout: `http://localhost:3000`
+- Web origins: `http://localhost:3000`
+
+Generate `AUTH0_SECRET` with `openssl rand -hex 32`. Restart `npm run dev`
+after changing env vars. Until those four values are set, login is hidden and
+every screen stays public.
 
 `next.config.mjs` proxies `/api/*` to the backend on port 8000, so the frontend
 talks to its own origin and needs no configuration to run locally. Override the
@@ -214,7 +228,7 @@ cd backend && python scripts/capture_fallback.py
 | Weather & climate | Live Open-Meteo forecast + last-year archive | Real data; frost dates from one year, so noisy |
 | Care tasks | Priority rule chain over crop type, age, and the live forecast | Heuristic, but responds to real weather |
 | Persistence | React context + `localStorage` | Per-browser only |
-| Auth | None | Out of scope |
+| Auth | Auth0 Universal Login when `AUTH0_*` env vars are set | Optional; garden flow is public until configured |
 
 Everything above is intentional. Nothing here trains a model, calls a paid API,
 or requires a key.
@@ -328,7 +342,8 @@ Two places:
   plantings         (layout_id, crop_id, planted_on, status)
   ```
 
-  Add auth at the same time — the scaffold deliberately has none.
+  Auth0 is already wired (`session.user.sub` is the user id). Persistence is
+  still `localStorage` until this swap.
 
 ### 6. Computer vision
 `frontend/components/space/GrowingSpaceForm.tsx` has a disabled photo-upload
@@ -370,7 +385,8 @@ curl -s localhost:8000/api/analyze-food -H 'content-type: application/json' -d '
 ## Frontend notes
 
 **Screens** — `/` landing, `/onboarding/food`, `/profile`,
-`/onboarding/space`, `/recommendations`, `/garden`, `/garden/3d`, `/today`.
+`/onboarding/space`, `/recommendations`, `/garden`, `/garden/3d`, `/today`,
+`/account` (Auth0 session).
 
 **Components** — grouped by feature: `layout/` (nav, progress header),
 `ui/` (primitives, icons), `food/` (MealInput, IngredientCard,
@@ -455,4 +471,4 @@ slot back in.
   the savings figures as real numbers.
 - Homegrown coverage assumes 7 lbs of produce per person per week over a
   20-week season. That constant lives in `crop_scoring.py`.
-- No authentication, no multi-user support, no server-side persistence.
+- No server-side persistence. Auth0 identifies the user; garden state is still per-browser `localStorage`.

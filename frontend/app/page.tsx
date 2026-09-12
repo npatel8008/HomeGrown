@@ -1,7 +1,9 @@
 import Link from "next/link";
 
+import { AuthButtons, AuthStatusLine } from "@/components/auth/AuthButtons";
 import { ArrowRightIcon, BasketIcon, CubeIcon, LeafIcon, SparkIcon, SunIcon } from "@/components/ui/Icons";
 import { DemoSeedButton } from "@/components/layout/DemoSeedButton";
+import { getSessionUser, isAuth0Configured } from "@/lib/auth0";
 
 const FLOW = [
   {
@@ -21,7 +23,10 @@ const FLOW = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const authEnabled = isAuth0Configured();
+  const user = await getSessionUser();
+
   return (
     <>
       {/* Hero */}
@@ -42,14 +47,20 @@ export default function LandingPage() {
               into a personalized garden plan.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/onboarding/food" className="btn-primary !px-7 !py-3.5 text-base">
-                Build My Garden
-                <ArrowRightIcon />
-              </Link>
-              <DemoSeedButton />
+              {authEnabled && !user ? (
+                <AuthButtons returnTo="/onboarding/food" />
+              ) : (
+                <>
+                  <Link href="/onboarding/food" className="btn-primary !px-7 !py-3.5 text-base">
+                    {user ? "Continue to my garden" : "Build My Garden"}
+                    <ArrowRightIcon />
+                  </Link>
+                  <DemoSeedButton />
+                </>
+              )}
             </div>
             <p className="mt-5 text-xs text-ink-faint">
-              No account needed. Demo data is bundled — nothing leaves your machine.
+              <AuthStatusLine authEnabled={authEnabled} user={user} />
             </p>
           </div>
 

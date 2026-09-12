@@ -4,9 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { AuthButtons } from "@/components/auth/AuthButtons";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { LeafIcon } from "@/components/ui/Icons";
+import type { AuthUser } from "@/lib/auth-user";
+import { LOGOUT_HREF, loginHref } from "@/lib/auth-user";
 import { cx } from "@/lib/format";
 import { useGardenStore } from "@/lib/store";
-import { LeafIcon } from "@/components/ui/Icons";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -17,7 +21,13 @@ const LINKS = [
   { href: "/today", label: "Today" },
 ];
 
-export function AppNav() {
+export function AppNav({
+  authEnabled = false,
+  user = null,
+}: {
+  authEnabled?: boolean;
+  user?: AuthUser | null;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { progress } = useGardenStore();
@@ -62,6 +72,15 @@ export function AppNav() {
           >
             {progress.recommendations ? "My garden plan" : "Build my garden"}
           </Link>
+          {authEnabled ? (
+            user ? (
+              <UserMenu user={user} />
+            ) : (
+              <div className="hidden sm:flex">
+                <AuthButtons compact showSignup={false} returnTo={pathname || "/onboarding/food"} />
+              </div>
+            )
+          ) : null}
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
@@ -98,6 +117,36 @@ export function AppNav() {
                 </Link>
               </li>
             ))}
+            {authEnabled ? (
+              <li className="mt-2 border-t border-line pt-2">
+                {user ? (
+                  <>
+                    <Link
+                      href="/account"
+                      onClick={() => setOpen(false)}
+                      className="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted"
+                    >
+                      Account
+                    </Link>
+                    <a
+                      href={LOGOUT_HREF}
+                      className="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted"
+                    >
+                      Log out
+                    </a>
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-1 px-3 py-2">
+                    <a href={loginHref(pathname || "/onboarding/food")} className="btn-secondary w-full">
+                      Log in
+                    </a>
+                    <a href={loginHref(pathname || "/onboarding/food", true)} className="btn-primary w-full">
+                      Sign up
+                    </a>
+                  </div>
+                )}
+              </li>
+            ) : null}
           </ul>
         </div>
       ) : null}
