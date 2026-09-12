@@ -15,6 +15,7 @@ import type {
   CareRecommendationsResponse,
   GardenStatusResponse,
   GenerateLayoutRequest,
+  LocationLookupResponse,
   GenerateLayoutResponse,
   RecommendCropsRequest,
   RecommendCropsResponse,
@@ -80,6 +81,16 @@ export function getHealth() {
   );
 }
 
+/** Geocoding + local climate for a city or postal code. */
+export function lookupLocation(city: string, zipCode: string) {
+  const query = `?city=${encodeURIComponent(city)}&zip=${encodeURIComponent(zipCode)}`;
+  return request<LocationLookupResponse>(
+    `/api/location${query}`,
+    { method: "GET" },
+    fallback.location as LocationLookupResponse,
+  );
+}
+
 /** SYSTEM 1 — ingredient extraction. */
 export function analyzeFood(body: AnalyzeFoodRequest) {
   return request<AnalyzeFoodResponse>(
@@ -108,8 +119,8 @@ export function generateLayout(body: GenerateLayoutRequest) {
 }
 
 /** SYSTEM 4 — garden care: season progress. */
-export function getGardenStatus(day = 31, location = "Demo City, US") {
-  const query = `?day=${day}&location=${encodeURIComponent(location)}`;
+export function getGardenStatus(day = 34, location = "", zipCode = "") {
+  const query = `?day=${day}&location=${encodeURIComponent(location)}&zip=${encodeURIComponent(zipCode)}`;
   return request<GardenStatusResponse>(
     `/api/garden-status${query}`,
     { method: "GET" },
@@ -120,12 +131,15 @@ export function getGardenStatus(day = 31, location = "Demo City, US") {
 /** SYSTEM 4 — garden care: today's tasks. */
 export function getCareRecommendations(
   plantings: { crop_id: string; days_since_planting: number }[] = [],
-  location = "Demo City, US",
+  location = "",
+  zipCode = "",
 ) {
   const crops = plantings
     .map((planting) => `${planting.crop_id}:${planting.days_since_planting}`)
     .join(",");
-  const query = `?location=${encodeURIComponent(location)}${crops ? `&crops=${crops}` : ""}`;
+  const query =
+    `?location=${encodeURIComponent(location)}&zip=${encodeURIComponent(zipCode)}` +
+    (crops ? `&crops=${crops}` : "");
   return request<CareRecommendationsResponse>(
     `/api/care-recommendations${query}`,
     { method: "GET" },

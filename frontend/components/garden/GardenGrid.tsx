@@ -113,10 +113,11 @@ export function GardenGrid({
           ))}
 
           {/* plants */}
-          {layout.plants.map((plant) => (
+          {layout.plants.map((plant, index) => (
             <PlantMarker
               key={plant.id}
               plant={plant}
+              index={index}
               selected={plant.id === selectedId}
               onSelect={onSelect}
               showSpacing={showSpacing}

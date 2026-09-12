@@ -20,6 +20,7 @@ from a hardiness-zone / frost-date source instead of `SUNLIGHT_HOURS`.
 from typing import Dict, List, Tuple
 
 from models.schemas import (
+    ClimateOut,
     CropRecommendation,
     Difficulty,
     ExperienceLevel,
@@ -27,25 +28,24 @@ from models.schemas import (
     GardenType,
     RecommendCropsRequest,
     RecommendCropsResponse,
+    ResolvedLocationOut,
     ScoreBreakdown,
-    SunlightLevel,
+    SkippedCrop,
 )
 from services import crop_reasons
+from services.climate import ClimateProfile, climate_profile
 from services.crop_repository import all_crops
+from services.location import resolve as resolve_location
 
+# Climate carries real weight now that it is measured data rather than a guess.
+# Whether a crop suits the local season is second only to whether the household
+# actually eats it.
 WEIGHTS = {
-    "household_demand": 0.35,
-    "climate_fit": 0.20,
-    "space_efficiency": 0.15,
-    "financial_value": 0.20,
+    "household_demand": 0.32,
+    "climate_fit": 0.30,
+    "space_efficiency": 0.12,
+    "financial_value": 0.16,
     "ease_of_growing": 0.10,
-}
-
-# Usable sunlight hours implied by each self-reported sunlight level.
-SUNLIGHT_HOURS = {
-    SunlightLevel.FULL_SUN: 8.0,
-    SunlightLevel.PARTIAL_SUN: 5.0,
-    SunlightLevel.MOSTLY_SHADE: 3.0,
 }
 
 DIFFICULTY_SCORE = {"easy": 100.0, "medium": 65.0, "hard": 35.0}
@@ -54,9 +54,9 @@ WATER_LOAD = {"low": 0.2, "medium": 0.5, "medium-high": 0.75, "high": 1.0}
 # Fraction of the plot that is walkways / bed edges rather than planting area.
 PATH_OVERHEAD = 0.35
 
-# Rough pounds of produce one person eats per week during the season.
+# Rough pounds of produce one person eats per week during the season. The
+# number of weeks now comes from the location's real frost-free window.
 PRODUCE_LBS_PER_PERSON_PER_WEEK = 7.0
-SEASON_WEEKS = 20
 
 
 def _clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
@@ -76,20 +76,121 @@ def _demand_lookup(request: RecommendCropsRequest) -> Dict[str, float]:
     return demand
 
 
-def _climate_fit(crop: dict, request: RecommendCropsRequest) -> float:
-    available = SUNLIGHT_HOURS[request.space.sunlight]
-    needed = float(crop["sunlight_hours"])
-    ratio = available / needed if needed else 1.0
-    score = _clamp(ratio * 100.0)
+def _season_fit(crop: dict, climate: ClimateProfile) -> Tuple[float, bool, str]:
+    """Can this crop actually finish before frost here?
+
+    This is the single most decisive piece of local information: a 120-day
+    eggplant in a 100-day season will not produce, no matter how much the
+    household likes eggplant.
+    """
+    season = max(1, climate.frost_free_days)
+    needed = crop["days_to_harvest"]
+
+    # Garlic overwinters on purpose, so the frost window doesn't apply.
+    overwinters = needed > 200
+    if overwinters:
+        return 78.0, True, "Overwinters in the ground — planted in autumn, harvested next summer."
+
+    headroom = season / needed
+    if headroom >= 2.2:
+        score = 100.0
+        note = "Comfortably fits your ~%d-day season, with room for a second sowing." % season
+        fits = True
+    elif headroom >= 1.35:
+        score = 88.0
+        note = "Matures in ~%d days, well inside your ~%d-day season." % (needed, season)
+        fits = True
+    elif headroom >= 1.0:
+        score = 62.0
+        note = "Needs ~%d of your ~%d frost-free days — start it early." % (needed, season)
+        fits = True
+    elif headroom >= 0.82:
+        score = 30.0
+        note = "Tight: ~%d days to harvest against a ~%d-day season. Start indoors." % (needed, season)
+        fits = False
+    else:
+        score = 8.0
+        note = "Won't finish — ~%d days needed, only ~%d frost-free." % (needed, season)
+        fits = False
+
+    return score, fits, note
+
+
+def _temperature_fit(crop: dict, climate: ClimateProfile) -> float:
+    """Does the crop want the kind of summer this place actually gets?
+
+    Warm-season crops are scored on accumulated growing-degree-days, which
+    captures both how warm and how long the summer is — a tomato needs roughly
+    2000 GDD (base 50°F) to crop well. Cool-season crops are scored on how many
+    days break 90°F, because that is what makes them bolt.
+    """
+    season_type = crop.get("season", "all")
+    high = climate.avg_summer_high_f or 82.0
+    hot_days = climate.hot_days
+    gdd = climate.growing_degree_days or 2500
+
+    if season_type == "warm":
+        score = _clamp((gdd / 2000.0) * 100.0)
+        # Heat units alone aren't enough — fruit set needs warm days.
+        if high < 65:
+            score *= 0.35
+        elif high < 72:
+            score *= 0.5
+        elif high < 78:
+            score *= 0.8
+        # And too much heat makes blossoms drop.
+        if high >= 100:
+            score *= 0.7
+        elif high >= 95:
+            score *= 0.85
+        return _clamp(score)
+
+    if season_type == "cool":
+        # A long hot summer doesn't rule these out — you grow them in the
+        # shoulder seasons instead — but it does narrow the window.
+        if hot_days >= 110:
+            return 40.0
+        if hot_days >= 60:
+            return 62.0
+        if hot_days >= 25:
+            return 82.0
+        return 100.0
+
+    return 88.0
+
+
+def _climate_fit(crop: dict, request: RecommendCropsRequest, climate: ClimateProfile) -> Tuple[float, bool, str]:
+    """Season length + temperature + practical constraints.
+
+    There is deliberately no "how sunny is your yard" input. Self-reported
+    sunlight was a guess dressed up as data, and the crop dataset's
+    `sunlight_hours` is only meaningful against a real measurement or a
+    shade analysis of the actual plot — neither of which we have. When photo
+    analysis lands (see the growing-space form's upload placeholder), a
+    measured exposure figure belongs right here.
+    """
+    season_score, fits, note = _season_fit(crop, climate)
+    temperature = _temperature_fit(crop, climate)
+
+    # Temperature carries the most weight: season length is already enforced
+    # as a hard gate elsewhere, so what's left is whether the crop will
+    # actually thrive in this summer, not merely survive it.
+    score = season_score * 0.42 + temperature * 0.58
+
     if request.space.garden_type in (GardenType.CONTAINERS, GardenType.BALCONY):
         if not crop["container_compatible"]:
             score *= 0.35
         else:
             score *= 0.95
+
     water_load = WATER_LOAD.get(crop["water_requirement"], 0.5)
     if request.space.water_access.value == "limited":
         score *= 1.0 - 0.4 * water_load
-    return _clamp(score)
+    # A dry climate makes a thirsty crop more work regardless of tap access.
+    if climate.annual_precip_in and climate.annual_precip_in < 15:
+        score *= 1.0 - 0.18 * water_load
+
+    return _clamp(score), fits, note
 
 
 def _space_efficiency(crop: dict) -> float:
@@ -124,11 +225,11 @@ def _reason(crop: dict, parts: ScoreBreakdown, request: RecommendCropsRequest) -
         bits.append("%s rounds out what your garden can supply" % crop["name"].lower())
 
     if parts.climate_fit >= 75:
-        bits.append("your space gets enough sunlight for it")
+        bits.append("your local season and summer temperatures suit it well")
     elif parts.climate_fit >= 45:
-        bits.append("it tolerates the light your space gets")
+        bits.append("it will cope with your local season")
     else:
-        bits.append("it will be light-limited but still productive")
+        bits.append("your season is marginal for it, but it can still produce")
 
     if parts.financial_value >= 70:
         bits.append("it returns strong value per square foot")
@@ -156,16 +257,24 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
     crops = all_crops()
     demand = _demand_lookup(request)
 
+    # Resolve where the household actually is, and what growing there is like.
+    # Both fall back to neutral placeholders offline, so this never fails.
+    location = resolve_location(request.space.location, request.space.zip_code)
+    climate = climate_profile(location.latitude, location.longitude)
+
     raw_space = {crop["id"]: _space_efficiency(crop) for crop in crops}
     raw_money = {crop["id"]: _financial_value(crop) for crop in crops}
     space_scores = _normalise(raw_space)
     money_scores = _normalise(raw_money)
 
+    season_notes: Dict[str, Tuple[bool, str]] = {}
     scored: List[Tuple[float, dict, ScoreBreakdown]] = []
     for crop in crops:
+        fit_score, fits_season, season_note = _climate_fit(crop, request, climate)
+        season_notes[crop["id"]] = (fits_season, season_note)
         breakdown = ScoreBreakdown(
             household_demand=round(demand.get(crop["id"], 0.0), 1),
-            climate_fit=round(_climate_fit(crop, request), 1),
+            climate_fit=round(fit_score, 1),
             space_efficiency=round(space_scores[crop["id"]], 1),
             financial_value=round(money_scores[crop["id"]], 1),
             ease_of_growing=round(_ease(crop, request.space.experience), 1),
@@ -185,21 +294,42 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
     plantable_area = total_area * (1 - PATH_OVERHEAD)
     budget = request.space.budget_usd
 
+    # Weeks this climate can actually supply produce — used for both the
+    # appetite cap below and the coverage figure in the summary.
+    season_weeks = max(6, min(40, climate.frost_free_days / 7))
+
     # How many pounds of produce the household plausibly wants, split across
     # crops in proportion to demand. Stops one high-scoring crop from being
     # recommended in quantities nobody will eat.
-    total_need_lbs = PRODUCE_LBS_PER_PERSON_PER_WEEK * request.household_size * SEASON_WEEKS
+    total_need_lbs = PRODUCE_LBS_PER_PERSON_PER_WEEK * request.household_size * season_weeks
     demand_total = sum(demand.values()) or 1.0
 
     recommendations: List[CropRecommendation] = []
-    skipped: List[str] = []
+    skipped: List[SkippedCrop] = []
     area_left = plantable_area
     budget_left = budget
     rank = 1
 
     for total, crop, breakdown in scored:
+        fits_season, season_note = season_notes[crop["id"]]
+
+        if not fits_season:
+            # Hard constraint: it cannot reach harvest before frost here.
+            skipped.append(
+                SkippedCrop(
+                    name=crop["name"], crop_id=crop["id"], reason=season_note, kind="climate"
+                )
+            )
+            continue
         if total < 25:
-            skipped.append(crop["name"])
+            skipped.append(
+                SkippedCrop(
+                    name=crop["name"],
+                    crop_id=crop["id"],
+                    reason="Scored too low for your household and conditions.",
+                    kind="demand",
+                )
+            )
             continue
 
         footprint = crop["spacing_ft"] ** 2
@@ -218,7 +348,14 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
         count = max(0, min(count, appetite_cap, 24))
 
         if count == 0:
-            skipped.append(crop["name"])
+            skipped.append(
+                SkippedCrop(
+                    name=crop["name"],
+                    crop_id=crop["id"],
+                    reason="Ran out of plot space or budget before this one.",
+                    kind="space",
+                )
+            )
             continue
 
         used_area = count * footprint
@@ -244,6 +381,8 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
                 difficulty=Difficulty(crop["difficulty"]),
                 water_requirement=crop["water_requirement"],
                 space_required_sqft=round(used_area, 1),
+                fits_season=fits_season,
+                season_note=season_note,
                 color=crop["color"],
                 image=crop["image"],
                 description=crop["description"],
@@ -257,7 +396,7 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
 
     # Optional pass: replace the template rationales with model-written ones.
     # One batched call for the whole list; failures leave the templates alone.
-    _apply_llm_reasons(recommendations, request)
+    _apply_llm_reasons(recommendations, request, climate)
 
     used_area = sum(item.space_required_sqft for item in recommendations)
     total_yield = sum(item.expected_yield_lbs for item in recommendations)
@@ -265,7 +404,7 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
     total_cost = sum(item.growing_cost_usd for item in recommendations)
 
     household_need_lbs = (
-        PRODUCE_LBS_PER_PERSON_PER_WEEK * request.household_size * SEASON_WEEKS
+        PRODUCE_LBS_PER_PERSON_PER_WEEK * request.household_size * season_weeks
     )
     coverage = int(round(_clamp((total_yield / household_need_lbs) * 100 if household_need_lbs else 0)))
 
@@ -285,12 +424,15 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
             % (coverage, request.household_size)
         ),
         within_budget=total_cost <= budget,
+        produce_need_lbs=round(household_need_lbs, 1),
     )
 
     return RecommendCropsResponse(
         summary=summary,
         recommendations=recommendations,
         skipped=skipped,
+        location=ResolvedLocationOut(**location.model_dump(), label=location.label),
+        climate=ClimateOut(**climate.model_dump(exclude={"latitude", "longitude"})),
         generated_by=(
             "mock-crop-scoring-v0+llm-reasons"
             if crop_reasons.enabled()
@@ -300,7 +442,9 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
 
 
 def _apply_llm_reasons(
-    recommendations: List[CropRecommendation], request: RecommendCropsRequest
+    recommendations: List[CropRecommendation],
+    request: RecommendCropsRequest,
+    climate: ClimateProfile,
 ) -> None:
     """Overwrite `reason` in place where the model produced a better sentence."""
     if not recommendations or not crop_reasons.enabled():
@@ -332,7 +476,8 @@ def _apply_llm_reasons(
             for crop in recommendations
         ],
         household_size=request.household_size,
-        sunlight=request.space.sunlight.value.replace("-", " "),
+        climate="zone %s, ~%d frost-free days, summer highs around %.0f\u00b0F"
+        % (climate.hardiness_zone, climate.frost_free_days, climate.avg_summer_high_f),
         plot_sqft=request.space.plot.width_ft * request.space.plot.length_ft,
         experience=request.space.experience.value,
     )

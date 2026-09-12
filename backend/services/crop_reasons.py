@@ -24,7 +24,7 @@ Reply with ONLY this JSON, nothing else:
 - One entry per crop id given, using that exact id as the key.
 - One sentence, under 28 words, plain language, second person ("your").
 - Say why THIS household should grow it: name the meals or the score that
-  drives it, plus the space, light, or money angle when it's the real reason.
+  drives it, plus the space, climate, or money angle when it's the real reason.
 - No emoji, no marketing voice, no repeating the crop name twice.
 Answer immediately. Do not deliberate."""
 
@@ -36,12 +36,12 @@ def enabled() -> bool:
 
 
 def _build_user_prompt(
-    crops: List[dict], household_size: int, sunlight: str, plot_sqft: float, experience: str
+    crops: List[dict], household_size: int, climate: str, plot_sqft: float, experience: str
 ) -> str:
     lines = []
     for crop in crops:
         lines.append(
-            "%s | %s | %d plants | demand %d/100 | light fit %d/100 | "
+            "%s | %s | %d plants | demand %d/100 | climate fit %d/100 | "
             "space %d/100 | value %d/100 | ease %d/100 | %s to grow | "
             "%.0f lbs, saves $%.0f, %d days"
             % (
@@ -61,17 +61,18 @@ def _build_user_prompt(
         )
     meals = ", ".join(crop["meals"] for crop in crops if crop.get("meals")) or "not given"
     return (
-        "Household: %d people, %s, %.0f sq ft, %s gardener\n"
+        "Household: %d people, %.0f sq ft, %s gardener\n"
+        "Local climate: %s\n"
         "Their meals mention: %s\n\n"
         "Crops:\n%s"
-        % (household_size, sunlight, plot_sqft, experience, meals, "\n".join(lines))
+        % (household_size, plot_sqft, experience, climate, meals, "\n".join(lines))
     )
 
 
 def write_reasons(
     crops: List[dict],
     household_size: int,
-    sunlight: str,
+    climate: str,
     plot_sqft: float,
     experience: str,
 ) -> Optional[Dict[str, str]]:
@@ -85,7 +86,7 @@ def write_reasons(
             {
                 "role": "user",
                 "content": _build_user_prompt(
-                    crops, household_size, sunlight, plot_sqft, experience
+                    crops, household_size, climate, plot_sqft, experience
                 ),
             },
         ],

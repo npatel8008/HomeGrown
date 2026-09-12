@@ -2,9 +2,12 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
+import { DEMO_SEASON_DAY } from "@/lib/demo";
 import { useGardenStore } from "@/lib/store";
+import type { SceneClock } from "@/components/garden/Garden3D";
+import { SceneControls } from "@/components/garden/SceneControls";
 import type { PlacedPlant } from "@/lib/types";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PlantDetailsPanel } from "@/components/garden/PlantDetailsPanel";
@@ -24,9 +27,15 @@ const Garden3D = dynamic(() => import("@/components/garden/Garden3D"), {
   ),
 });
 
+const SEASON_LENGTH_DAYS = 150;
+
 export default function Garden3DPage() {
   const { state, hydrated } = useGardenStore();
   const [selected, setSelected] = useState<PlacedPlant | null>(null);
+
+  // Held in a ref, not state: the scrubber and the render loop share it so
+  // dragging never re-renders the plants.
+  const clockRef = useRef<SceneClock>({ day: DEMO_SEASON_DAY, timeOfDay: 0.5 });
 
   if (hydrated && !state.layout) {
     return (
@@ -65,9 +74,22 @@ export default function Garden3DPage() {
       {layout ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start">
           <div className="space-y-4">
-            <Garden3D layout={layout} selectedId={selected?.id ?? null} onSelect={setSelected} />
+            <Garden3D
+              layout={layout}
+              selectedId={selected?.id ?? null}
+              onSelect={setSelected}
+              clockRef={clockRef}
+            />
+            <SceneControls
+              layout={layout}
+              clockRef={clockRef}
+              seasonLength={SEASON_LENGTH_DAYS}
+              initialDay={DEMO_SEASON_DAY}
+            />
             <p className="text-xs leading-relaxed text-ink-faint">
-              Plants are stylized primitives sized from each crop&apos;s mature height. Positions,
+              Plants are procedural geometry sized from each crop&apos;s mature height, with a
+              per-plant seed so no two are identical. Growth is driven by each crop&apos;s{" "}
+              <code className="rounded bg-cream-deep px-1 py-0.5">days_to_harvest</code>. Positions,
               spacing and bed geometry come from{" "}
               <code className="rounded bg-cream-deep px-1 py-0.5">POST /api/generate-layout</code> —
               the same response the 2D planner draws.

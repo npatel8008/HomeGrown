@@ -1,6 +1,7 @@
 import { lbs, sqft, usd } from "@/lib/format";
 import type { GardenSummary } from "@/lib/types";
 import { Stat } from "@/components/ui/Stat";
+import { CountUp } from "@/components/ui/CountUp";
 import { BasketIcon, CoinIcon, LeafIcon, RulerIcon, SparkIcon } from "@/components/ui/Icons";
 
 /** The row of headline metrics above the recommendation list. */
@@ -9,25 +10,25 @@ export function SavingsSummary({ summary }: { summary: GardenSummary }) {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <Stat
         label="Growing area"
-        value={sqft(summary.total_area_sqft)}
+        value={<CountUp value={summary.total_area_sqft} format={sqft} />}
         sub={`${sqft(summary.used_area_sqft)} planted, rest is paths and margins`}
         icon={<RulerIcon className="h-4 w-4" />}
       />
       <Stat
         label="Estimated produce"
-        value={lbs(summary.estimated_yield_lbs)}
+        value={<CountUp value={summary.estimated_yield_lbs} format={lbs} />}
         sub={`${summary.total_plants} plants across the season`}
         icon={<BasketIcon className="h-4 w-4" />}
       />
       <Stat
         label="Grocery value"
-        value={usd(summary.estimated_grocery_value_usd)}
+        value={<CountUp value={summary.estimated_grocery_value_usd} format={usd} />}
         sub="What this produce would cost at the store"
         icon={<CoinIcon className="h-4 w-4" />}
       />
       <Stat
         label="Seasonal savings"
-        value={usd(summary.estimated_savings_usd)}
+        value={<CountUp value={summary.estimated_savings_usd} format={usd} durationMs={1200} />}
         sub={`After ${usd(summary.estimated_cost_usd)} of seeds, starts and soil`}
         icon={<SparkIcon className="h-4 w-4" />}
         accent="earth"

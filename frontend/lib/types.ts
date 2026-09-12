@@ -3,7 +3,6 @@
  * There is no codegen step in the scaffold: change one, change the other.
  */
 
-export type SunlightLevel = "full-sun" | "partial-sun" | "mostly-shade";
 export type GardenType = "in-ground" | "raised-beds" | "containers" | "balcony";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 export type WaterAccess = "hose" | "watering-can" | "irrigation" | "limited";
@@ -55,6 +54,46 @@ export interface AnalyzeFoodResponse {
 }
 
 /* ------------------------------------------------------------------ */
+/* GET /api/location — geocoding + local climate                       */
+/* ------------------------------------------------------------------ */
+
+export interface ResolvedLocation {
+  query: string;
+  name: string;
+  region: string;
+  country: string;
+  country_code: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  elevation_ft: number;
+  label: string;
+  /** False when the lookup failed and a neutral fallback was used. */
+  resolved: boolean;
+}
+
+export interface Climate {
+  /** "MM-DD" strings, or null in a frost-free climate. */
+  last_spring_frost: string | null;
+  first_fall_frost: string | null;
+  frost_free_days: number;
+  growing_degree_days: number;
+  avg_summer_high_f: number;
+  avg_summer_low_f: number;
+  annual_precip_in: number;
+  hot_days: number;
+  hardiness_zone: string;
+  coldest_night_f: number;
+  summary: string;
+  source: string;
+}
+
+export interface LocationLookupResponse {
+  location: ResolvedLocation;
+  climate: Climate;
+}
+
+/* ------------------------------------------------------------------ */
 /* 2. POST /api/recommend-crops                                        */
 /* ------------------------------------------------------------------ */
 
@@ -68,7 +107,6 @@ export interface GrowingSpace {
   location: string;
   zip_code: string;
   plot: PlotSpec;
-  sunlight: SunlightLevel;
   garden_type: GardenType;
   experience: ExperienceLevel;
   budget_usd: number;
@@ -107,6 +145,8 @@ export interface CropRecommendation {
   difficulty: Difficulty;
   water_requirement: string;
   space_required_sqft: number;
+  fits_season: boolean;
+  season_note: string;
   color: string;
   image: string;
   description: string;
@@ -124,12 +164,23 @@ export interface GardenSummary {
   homegrown_coverage_pct: number;
   coverage_explainer: string;
   within_budget: boolean;
+  /** Season-long produce need, so the client can recompute coverage. */
+  produce_need_lbs: number;
+}
+
+export interface SkippedCrop {
+  name: string;
+  crop_id: string;
+  reason: string;
+  kind: "climate" | "demand" | "space";
 }
 
 export interface RecommendCropsResponse {
   summary: GardenSummary;
   recommendations: CropRecommendation[];
-  skipped: string[];
+  skipped: SkippedCrop[];
+  location: ResolvedLocation | null;
+  climate: Climate | null;
   generated_by: string;
 }
 
@@ -197,6 +248,15 @@ export interface GenerateLayoutResponse {
 /* 4. GET /api/garden-status, GET /api/care-recommendations            */
 /* ------------------------------------------------------------------ */
 
+export interface DailyForecast {
+  date: string;
+  high_f: number;
+  low_f: number;
+  precip_in: number;
+  precip_chance_pct: number;
+  conditions: string;
+}
+
 export interface Weather {
   location: string;
   temperature_f: number;
@@ -204,6 +264,9 @@ export interface Weather {
   rain_probability_pct: number;
   wind_mph: number;
   forecast_note: string;
+  humidity_pct: number;
+  rain_next_3_days_in: number;
+  days: DailyForecast[];
   source: string;
 }
 

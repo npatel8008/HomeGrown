@@ -59,14 +59,15 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        grow: {
-          "0%": { transform: "scaleY(0.2)", opacity: "0" },
-          "100%": { transform: "scaleY(1)", opacity: "1" },
+        pop: {
+          "0%": { transform: "scale(0)", opacity: "0" },
+          "70%": { transform: "scale(1.12)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" },
         },
       },
       animation: {
         "fade-up": "fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
-        grow: "grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both",
+        pop: "pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both",
       },
     },
   },

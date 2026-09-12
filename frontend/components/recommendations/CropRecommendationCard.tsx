@@ -4,16 +4,50 @@ import { useState } from "react";
 
 import { usd, waterLabel } from "@/lib/format";
 import type { CropRecommendation } from "@/lib/types";
+import { cx } from "@/lib/format";
 import { Badge, DifficultyBadge } from "@/components/ui/Badge";
-import { ClockIcon, DropIcon, RulerIcon } from "@/components/ui/Icons";
+import { CheckIcon, ClockIcon, DropIcon, RulerIcon } from "@/components/ui/Icons";
 import { RecommendationScore, ScoreDial } from "./RecommendationScore";
 
-export function CropRecommendationCard({ crop }: { crop: CropRecommendation }) {
+export function CropRecommendationCard({
+  crop,
+  selected = true,
+  onToggle,
+}: {
+  crop: CropRecommendation;
+  /** Whether the user has chosen to plant this one. */
+  selected?: boolean;
+  onToggle?: (cropId: string, next: boolean) => void;
+}) {
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   return (
-    <article className="card overflow-hidden transition-shadow hover:shadow-lift">
+    <article
+      className={cx(
+        "card overflow-hidden transition-all",
+        selected ? "hover:shadow-lift" : "opacity-55 saturate-50 hover:opacity-80",
+      )}
+    >
       <div className="flex items-start gap-4 border-b border-line/70 p-5">
+        {onToggle ? (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={selected}
+            aria-label={`${selected ? "Remove" : "Add"} ${crop.name} ${
+              selected ? "from" : "to"
+            } your garden`}
+            onClick={() => onToggle(crop.crop_id, !selected)}
+            className={cx(
+              "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors",
+              selected
+                ? "border-forest bg-forest text-cream"
+                : "border-line bg-white text-transparent hover:border-moss",
+            )}
+          >
+            <CheckIcon className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
         <span
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-display text-lg text-white"
           style={{ backgroundColor: crop.color }}
@@ -37,6 +71,13 @@ export function CropRecommendationCard({ crop }: { crop: CropRecommendation }) {
           <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-dark">Why this crop</p>
           <p className="mt-1 text-sm leading-relaxed text-forest first-letter:uppercase">{crop.reason}</p>
         </div>
+
+        {crop.season_note ? (
+          <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-muted">
+            <ClockIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-moss" />
+            {crop.season_note}
+          </p>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Metric label="Recommended" value={`${crop.plants_recommended}`} unit="plants" />

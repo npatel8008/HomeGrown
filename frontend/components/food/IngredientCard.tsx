@@ -25,7 +25,8 @@ export function IngredientCard({
             {ingredient.growable ? (
               <Badge tone="green">Growable</Badge>
             ) : (
-              <Badge tone="neutral">Not in crop library</Badge>
+              // Says it's a gap in our data, not that the plant can't be grown.
+              <Badge tone="neutral">Not in our crop library yet</Badge>
             )}
           </div>
           <p className="mt-1 text-xs text-ink-faint">

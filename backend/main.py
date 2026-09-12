@@ -9,6 +9,9 @@ services in `services/`:
     4. care_engine            -> GET  /api/garden-status
                                  GET  /api/care-recommendations
 
+Location and climate (services/location.py, services/climate.py) are shared
+inputs to systems 2 and 4, served on their own at GET /api/location.
+
 Ingredient extraction upgrades itself to a real model when `IFM_API_KEY` is
 set (see services/llm_client.py); everything else is still mocked. Each
 LLM-backed path falls back to its offline implementation on any failure.
@@ -30,7 +33,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
-from routes import care, food, garden, recommendations  # noqa: E402
+from routes import care, food, garden, location, recommendations  # noqa: E402
 from services import llm_client  # noqa: E402
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -59,6 +62,7 @@ app.include_router(food.router, prefix="/api")
 app.include_router(recommendations.router, prefix="/api")
 app.include_router(garden.router, prefix="/api")
 app.include_router(care.router, prefix="/api")
+app.include_router(location.router, prefix="/api")
 
 
 @app.get("/api/health", tags=["meta"])
@@ -78,6 +82,8 @@ def health() -> dict:
             "crop_scoring": "mock-heuristic",
             "layout_generation": "mock-shelf-packing",
             "care_engine": "mock-rules",
-            "weather": "mock",
+            "location": "open-meteo-geocoding",
+            "climate": "open-meteo-archive",
+            "weather": "open-meteo-forecast",
         },
     }

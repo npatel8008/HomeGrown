@@ -29,20 +29,26 @@ export default function TodayPage() {
   const [notice, setNotice] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
-  const location = state.space.location || "Demo City, US";
+  const location = state.space.location;
+  const zipCode = state.space.zip_code;
+  const label = state.location?.label || location || "your area";
 
   const load = useCallback(async () => {
     setLoading(true);
-    const plantings = derivePlantings(state.recommendations, DEMO_SEASON_DAY);
+    const plantings = derivePlantings(
+      state.recommendations,
+      DEMO_SEASON_DAY,
+      state.selectedCropIds,
+    );
     const [statusResult, careResult] = await Promise.all([
-      getGardenStatus(DEMO_SEASON_DAY, location),
-      getCareRecommendations(plantings, location),
+      getGardenStatus(DEMO_SEASON_DAY, location, zipCode),
+      getCareRecommendations(plantings, location, zipCode),
     ]);
     setStatus(statusResult.data);
     setCare(careResult.data);
     setNotice(statusResult.usedFallback ? statusResult.error : undefined);
     setLoading(false);
-  }, [state.recommendations, location]);
+  }, [state.recommendations, state.selectedCropIds, location, zipCode]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -59,8 +65,10 @@ export default function TodayPage() {
       <PageHeader
         eyebrow="Ongoing care"
         title="Your Garden Today"
-        description={`${location} · ${
-          care ? `${care.tasks.length} crops checked against today's forecast` : "Loading forecast"
+        description={`${label} · ${
+          care
+            ? `${care.tasks.length} crops checked against the live forecast`
+            : "Loading forecast"
         }`}
         actions={
           <button type="button" className="btn-secondary" onClick={load} disabled={loading}>

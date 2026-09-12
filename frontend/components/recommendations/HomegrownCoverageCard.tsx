@@ -1,4 +1,5 @@
 import { lbs, usd } from "@/lib/format";
+import { CountUp } from "@/components/ui/CountUp";
 import type { GardenSummary } from "@/lib/types";
 
 /** The signature metric: how much of the household's produce the garden covers. */
@@ -25,7 +26,13 @@ export function HomegrownCoverageCard({ summary }: { summary: GardenSummary }) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-display text-4xl leading-none">{coverage}%</span>
+            <span className="font-display text-4xl leading-none">
+              <CountUp
+                value={coverage}
+                durationMs={1200}
+                format={(value) => `${Math.round(value)}%`}
+              />
+            </span>
             <span className="mt-1 text-[10px] uppercase tracking-[0.16em] text-cream/60">covered</span>
           </div>
         </div>

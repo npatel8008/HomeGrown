@@ -76,6 +76,23 @@ body {
   }
 }
 
+/* SVG plant markers scale about their own centre when they pop in. */
+.plant-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Honour the OS setting: no entrances, no sweeps, no count-ups. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 /* Range inputs, themed to match the palette. */
 input[type="range"] {
   -webkit-appearance: none;

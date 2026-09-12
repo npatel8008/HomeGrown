@@ -3,7 +3,7 @@ import type { ScoreBreakdown } from "@/lib/types";
 
 const LABELS: { key: keyof ScoreBreakdown; label: string }[] = [
   { key: "household_demand", label: "Household demand" },
-  { key: "climate_fit", label: "Climate & light fit" },
+  { key: "climate_fit", label: "Local climate fit" },
   { key: "space_efficiency", label: "Space efficiency" },
   { key: "financial_value", label: "Financial value" },
   { key: "ease_of_growing", label: "Ease of growing" },

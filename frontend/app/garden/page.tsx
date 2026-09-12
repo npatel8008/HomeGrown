@@ -26,10 +26,12 @@ export default function GardenPlanPage() {
     const result = await generateLayout({
       plot: state.space.plot,
       garden_type: state.space.garden_type,
-      crops: state.recommendations.recommendations.map((crop) => ({
-        crop_id: crop.crop_id,
-        plants: crop.plants_recommended,
-      })),
+      crops: state.recommendations.recommendations
+        .filter(
+          (crop) =>
+            state.selectedCropIds.length === 0 || state.selectedCropIds.includes(crop.crop_id),
+        )
+        .map((crop) => ({ crop_id: crop.crop_id, plants: crop.plants_recommended })),
     });
     update({ layout: result.data, offlineMode: result.usedFallback });
     setSelected(null);

@@ -13,14 +13,16 @@ router = APIRouter(tags=["care"])
 @router.get("/garden-status", response_model=GardenStatusResponse)
 def garden_status(
     day: int = Query(34, ge=0, le=400, description="Day of the growing season"),
-    location: str = Query("Demo City, US"),
+    location: str = Query("", description="City or place name"),
+    zip_code: str = Query("", alias="zip"),
 ) -> GardenStatusResponse:
-    return care_engine.garden_status(day_of_season=day, location=location)
+    return care_engine.garden_status(day_of_season=day, location=location, zip_code=zip_code)
 
 
 @router.get("/care-recommendations", response_model=CareRecommendationsResponse)
 def care_recommendations(
-    location: str = Query("Demo City, US"),
+    location: str = Query("", description="City or place name"),
+    zip_code: str = Query("", alias="zip"),
     crops: Optional[str] = Query(
         None,
         description="Comma-separated crop_id:days_since_planting pairs, e.g. 'tomato:31,basil:24'",
@@ -39,4 +41,6 @@ def care_recommendations(
                     "days_since_planting": int(age) if age.strip().isdigit() else 0,
                 }
             )
-    return care_engine.care_recommendations(plantings=plantings, location=location)
+    return care_engine.care_recommendations(
+        plantings=plantings, location=location, zip_code=zip_code
+    )

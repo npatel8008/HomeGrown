@@ -11,11 +11,14 @@ export function PlantMarker({
   selected,
   onSelect,
   showSpacing,
+  index = 0,
 }: {
   plant: PlacedPlant;
   selected: boolean;
   onSelect: (plant: PlacedPlant) => void;
   showSpacing: boolean;
+  /** Position in the list, used to stagger the entrance. */
+  index?: number;
 }) {
   const radius = Math.max(0.18, plant.spacing_ft / 2 - 0.08);
   const dot = Math.min(0.42, Math.max(0.16, plant.spacing_ft / 3.2));
@@ -25,7 +28,9 @@ export function PlantMarker({
       role="button"
       tabIndex={0}
       aria-label={`${plant.crop} at ${plant.x} by ${plant.z} feet`}
-      className="cursor-pointer outline-none"
+      className="plant-pop animate-pop cursor-pointer outline-none"
+      // Capped so a big garden still finishes planting itself quickly.
+      style={{ animationDelay: `${Math.min(index * 12, 900)}ms` }}
       onClick={() => onSelect(plant)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {

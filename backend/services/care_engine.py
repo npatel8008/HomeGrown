@@ -3,11 +3,15 @@
 Produces "what should I do today" tasks from crop type, days since planting,
 water requirement and the weather.
 
+Weather is now real: `get_weather` resolves the household's location and pulls
+the current conditions and 7-day outlook from Open-Meteo (free, no API key).
+It falls back to a fixed placeholder forecast when the network is unavailable,
+and `Weather.source` says which you got.
+
 >>> REPLACE ME <<<
-`get_weather` is the only place weather is fabricated. Point it at a real
-provider (OpenWeather / NWS / Open-Meteo) and everything downstream keeps
-working. The rules in `build_tasks` should eventually consider soil moisture,
-growing-degree-days and per-plant observation history.
+The rules in `build_tasks` are still heuristics. They should eventually
+consider soil moisture, growing-degree-days accumulated since planting, and
+per-plant observation history rather than just days-since-planting.
 """
 
 from typing import Dict, List, Optional
@@ -15,28 +19,40 @@ from typing import Dict, List, Optional
 from models.schemas import (
     CareRecommendationsResponse,
     CareTask,
+    DailyForecastOut,
     GardenProgress,
     GardenStatusResponse,
     TaskCategory,
     Weather,
 )
+from services import climate as climate_service
 from services.crop_repository import get_crop
+from services.location import resolve as resolve_location
 
+#: Only a fallback — the real season length comes from the local climate.
 SEASON_LENGTH_DAYS = 150
 
 # Deterministic mock forecast so demos look the same every run.
-MOCK_FORECAST = {
-    "temperature_f": 78,
-    "conditions": "Partly cloudy",
-    "rain_probability_pct": 80,
-    "wind_mph": 6,
-    "forecast_note": "Rain expected tonight, around 0.4 in.",
-}
+def get_weather(location: str = "", zip_code: str = "") -> Weather:
+    """Live conditions for the household's location, via Open-Meteo.
 
-
-def get_weather(location: str = "Demo City, US") -> Weather:
-    """>>> REPLACE ME <<< with a real forecast call."""
-    return Weather(location=location, **MOCK_FORECAST)
+    Falls back to a fixed placeholder forecast when the network is
+    unavailable; `Weather.source` says which you got.
+    """
+    resolved = resolve_location(location, zip_code)
+    bundle = climate_service.forecast(resolved.latitude, resolved.longitude, resolved.label)
+    return Weather(
+        location=bundle.location,
+        temperature_f=bundle.temperature_f,
+        conditions=bundle.conditions,
+        rain_probability_pct=bundle.rain_probability_pct,
+        wind_mph=bundle.wind_mph,
+        forecast_note=bundle.forecast_note,
+        humidity_pct=bundle.humidity_pct,
+        rain_next_3_days_in=bundle.rain_next_3_days_in,
+        days=[DailyForecastOut(**day.model_dump()) for day in bundle.days],
+        source=bundle.source,
+    )
 
 
 def _default_planting() -> List[Dict[str, object]]:
@@ -60,8 +76,10 @@ def build_tasks(
 ) -> List[CareTask]:
     plantings = plantings or _default_planting()
     weather = weather or get_weather()
-    rain_likely = weather.rain_probability_pct >= 60
-    hot = weather.temperature_f >= 88
+    rain_likely = weather.rain_probability_pct >= 55 or weather.rain_next_3_days_in >= 0.25
+    hot = weather.temperature_f >= 86
+    # Nothing meaningful falling in the next three days.
+    dry_spell = weather.rain_next_3_days_in < 0.15 and weather.rain_probability_pct < 40
 
     tasks: List[CareTask] = []
     for planting in plantings:
@@ -71,6 +89,7 @@ def build_tasks(
         age = int(planting.get("days_since_planting", 0) or 0)
         days_left = max(0, crop["days_to_harvest"] - age)
         thirsty = crop["water_requirement"] in ("high", "medium-high")
+        drought_tolerant = crop["water_requirement"] == "low"
 
         # Rules in priority order — the first one that matches wins. Harvesting
         # beats watering, watering beats maintenance, maintenance beats "fine".
@@ -92,7 +111,8 @@ def build_tasks(
         elif thirsty and rain_likely:
             title, reason, category, action = (
                 "Skip watering today",
-                "Rain is expected tonight (%d%% chance)." % weather.rain_probability_pct,
+                "%d%% chance of rain, about %.2f\u2033 expected over the next three days."
+                % (weather.rain_probability_pct, weather.rain_next_3_days_in),
                 TaskCategory.ON_TRACK,
                 "skip-watering",
             )
@@ -110,6 +130,16 @@ def build_tasks(
                 "No rain expected and %s needs consistent moisture." % crop["name"].lower(),
                 TaskCategory.NEEDS_ATTENTION,
                 "water",
+            )
+        elif dry_spell and not drought_tolerant:
+            # Even average drinkers need help through a genuinely dry stretch —
+            # this is the whole point of reading a real forecast.
+            title, reason, category, action = (
+                "Check soil moisture",
+                "Only %.2f\u2033 of rain expected in the next three days. Water if the top inch is dry."
+                % weather.rain_next_3_days_in,
+                TaskCategory.COMING_SOON,
+                "check-moisture",
             )
         elif crop["category"] == "herb" and age >= 21:
             title, reason, category, action = (
@@ -159,9 +189,10 @@ def build_tasks(
 
 def care_recommendations(
     plantings: Optional[List[Dict[str, object]]] = None,
-    location: str = "Demo City, US",
+    location: str = "",
+    zip_code: str = "",
 ) -> CareRecommendationsResponse:
-    weather = get_weather(location)
+    weather = get_weather(location, zip_code)
     tasks = build_tasks(plantings, weather)
     counts = {category.value: 0 for category in TaskCategory}
     for task in tasks:
@@ -172,9 +203,14 @@ def care_recommendations(
 def garden_status(
     day_of_season: int = 34,
     plantings: Optional[List[Dict[str, object]]] = None,
-    location: str = "Demo City, US",
+    location: str = "",
+    zip_code: str = "",
 ) -> GardenStatusResponse:
     plantings = plantings or _default_planting()
+    resolved = resolve_location(location, zip_code)
+    local = climate_service.climate_profile(resolved.latitude, resolved.longitude)
+    # Season length is the real local frost-free window, not a fixed constant.
+    season_length = max(60, min(365, local.frost_free_days))
 
     projected = 0.0
     next_crop = None
@@ -193,14 +229,14 @@ def garden_status(
 
     # Value realised so far scales with how far into the season we are, with a
     # slow start (nothing is ripe in week one).
-    ratio = min(1.0, max(0.0, day_of_season / float(SEASON_LENGTH_DAYS)))
+    ratio = min(1.0, max(0.0, day_of_season / float(season_length)))
     realised = projected * (ratio ** 2)
 
     return GardenStatusResponse(
-        weather=get_weather(location),
+        weather=get_weather(location, zip_code),
         progress=GardenProgress(
             day_of_season=day_of_season,
-            season_length_days=SEASON_LENGTH_DAYS,
+            season_length_days=season_length,
             harvest_value_to_date_usd=round(realised, 2),
             projected_seasonal_value_usd=round(projected, 2),
             crops_planted=len(plantings),

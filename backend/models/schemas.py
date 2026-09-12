@@ -14,12 +14,6 @@ from pydantic import BaseModel, Field
 # Enums / shared vocabulary
 # ---------------------------------------------------------------------------
 
-class SunlightLevel(str, Enum):
-    FULL_SUN = "full-sun"
-    PARTIAL_SUN = "partial-sun"
-    MOSTLY_SHADE = "mostly-shade"
-
-
 class GardenType(str, Enum):
     IN_GROUND = "in-ground"
     RAISED_BEDS = "raised-beds"
@@ -96,12 +90,49 @@ class GrowingSpace(BaseModel):
     location: str = "Demo City, US"
     zip_code: str = "00000"
     plot: PlotSpec = Field(default_factory=PlotSpec)
-    sunlight: SunlightLevel = SunlightLevel.FULL_SUN
     garden_type: GardenType = GardenType.RAISED_BEDS
     experience: ExperienceLevel = ExperienceLevel.BEGINNER
     budget_usd: float = Field(default=150, ge=0)
     water_access: WaterAccess = WaterAccess.HOSE
     notes: str = ""
+
+
+class ResolvedLocationOut(BaseModel):
+    """Where we decided the user actually is."""
+
+    query: str = ""
+    name: str = ""
+    region: str = ""
+    country: str = ""
+    country_code: str = ""
+    latitude: float = 0
+    longitude: float = 0
+    timezone: str = ""
+    elevation_ft: float = 0
+    label: str = ""
+    resolved: bool = False
+
+
+class ClimateOut(BaseModel):
+    """Growing conditions derived from the last full year of local weather."""
+
+    last_spring_frost: Optional[str] = None
+    first_fall_frost: Optional[str] = None
+    frost_free_days: int = 0
+    growing_degree_days: int = 0
+    avg_summer_high_f: float = 0
+    avg_summer_low_f: float = 0
+    annual_precip_in: float = 0
+    hot_days: int = 0
+    hardiness_zone: str = ""
+    coldest_night_f: float = 0
+    summary: str = ""
+    source: str = ""
+
+
+class LocationLookupResponse(BaseModel):
+    location: ResolvedLocationOut
+    climate: ClimateOut
 
 
 class RecommendCropsRequest(BaseModel):
@@ -137,6 +168,9 @@ class CropRecommendation(BaseModel):
     difficulty: Difficulty
     water_requirement: str
     space_required_sqft: float
+    #: True when the crop can reach harvest inside the local frost-free window.
+    fits_season: bool = True
+    season_note: str = ""
     color: str
     image: str
     description: str
@@ -154,12 +188,28 @@ class GardenSummary(BaseModel):
     homegrown_coverage_pct: int
     coverage_explainer: str
     within_budget: bool
+    #: Pounds of produce the household plausibly eats in a season. Exposed so
+    #: the client can recompute coverage when the user deselects crops,
+    #: instead of duplicating the constant.
+    produce_need_lbs: float = 0
+
+
+class SkippedCrop(BaseModel):
+    """A crop that was considered and left out, and why."""
+
+    name: str
+    crop_id: str
+    reason: str
+    #: "climate" | "demand" | "space" — lets the UI group them.
+    kind: str = "space"
 
 
 class RecommendCropsResponse(BaseModel):
     summary: GardenSummary
     recommendations: List[CropRecommendation]
-    skipped: List[str] = Field(default_factory=list)
+    skipped: List[SkippedCrop] = Field(default_factory=list)
+    location: Optional[ResolvedLocationOut] = None
+    climate: Optional[ClimateOut] = None
     generated_by: str = "mock-crop-scoring-v0"
 
 
@@ -232,6 +282,15 @@ class GenerateLayoutResponse(BaseModel):
 # 4. Care engine  —  GET /api/garden-status, GET /api/care-recommendations
 # ---------------------------------------------------------------------------
 
+class DailyForecastOut(BaseModel):
+    date: str
+    high_f: int
+    low_f: int
+    precip_in: float
+    precip_chance_pct: int
+    conditions: str
+
+
 class Weather(BaseModel):
     location: str
     temperature_f: int
@@ -239,6 +298,9 @@ class Weather(BaseModel):
     rain_probability_pct: int
     wind_mph: int
     forecast_note: str
+    humidity_pct: int = 0
+    rain_next_3_days_in: float = 0
+    days: List[DailyForecastOut] = Field(default_factory=list)
     source: str = "mock-weather"
 
 

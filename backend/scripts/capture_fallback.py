@@ -30,10 +30,9 @@ DEMO_FREE_TEXT = (
     "and eggs most mornings."
 )
 DEMO_SPACE = {
-    "location": "Demo City, US",
-    "zip_code": "00000",
+    "location": "Austin, TX",
+    "zip_code": "78704",
     "plot": {"width_ft": 12, "length_ft": 8, "unit": "ft"},
-    "sunlight": "full-sun",
     "garden_type": "raised-beds",
     "experience": "beginner",
     "budget_usd": 150,
@@ -75,13 +74,21 @@ def main() -> None:
         for crop in recommendations["recommendations"]
     )
 
+    location = client.get(
+        "/api/location?city=%s&zip=%s" % (DEMO_SPACE["location"], DEMO_SPACE["zip_code"])
+    ).json()
+
     payload = {
+        "location": location,
         "analyzeFood": food,
         "recommendCrops": recommendations,
         "layout": layout,
-        "gardenStatus": client.get("/api/garden-status?day=%d" % DEMO_SEASON_DAY).json(),
+        "gardenStatus": client.get(
+            "/api/garden-status?day=%d&location=%s" % (DEMO_SEASON_DAY, DEMO_SPACE["location"])
+        ).json(),
         "careRecommendations": client.get(
-            "/api/care-recommendations?crops=%s" % plantings
+            "/api/care-recommendations?location=%s&zip=%s&crops=%s"
+            % (DEMO_SPACE["location"], DEMO_SPACE["zip_code"], plantings)
         ).json(),
         "crops": client.get("/api/crops").json(),
     }

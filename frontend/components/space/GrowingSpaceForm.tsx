@@ -1,20 +1,8 @@
 "use client";
 
 import { cx } from "@/lib/format";
-import type {
-  ExperienceLevel,
-  GardenType,
-  GrowingSpace,
-  SunlightLevel,
-  WaterAccess,
-} from "@/lib/types";
+import type { ExperienceLevel, GardenType, GrowingSpace, WaterAccess } from "@/lib/types";
 import { CameraIcon } from "@/components/ui/Icons";
-
-export const SUNLIGHT_OPTIONS: { value: SunlightLevel; label: string; hint: string }[] = [
-  { value: "full-sun", label: "Full sun", hint: "6+ hrs direct" },
-  { value: "partial-sun", label: "Partial sun", hint: "4-6 hrs" },
-  { value: "mostly-shade", label: "Mostly shade", hint: "under 4 hrs" },
-];
 
 export const GARDEN_TYPE_OPTIONS: { value: GardenType; label: string }[] = [
   { value: "in-ground", label: "In-ground" },
@@ -94,34 +82,6 @@ export function GrowingSpaceForm({
 
   return (
     <div className="space-y-7">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="label" htmlFor="location">
-            City
-          </label>
-          <input
-            id="location"
-            className="input"
-            placeholder="Demo City"
-            value={space.location}
-            onChange={(event) => onChange({ location: event.target.value })}
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="zip">
-            ZIP code
-          </label>
-          <input
-            id="zip"
-            className="input"
-            inputMode="numeric"
-            placeholder="00000"
-            value={space.zip_code}
-            onChange={(event) => onChange({ zip_code: event.target.value })}
-          />
-        </div>
-      </div>
-
       <div>
         <span className="label">Plot size</span>
         <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
@@ -149,13 +109,6 @@ export function GrowingSpaceForm({
           </span>
         </div>
       </div>
-
-      <OptionGrid
-        legend="Sunlight"
-        options={SUNLIGHT_OPTIONS}
-        value={space.sunlight}
-        onChange={(value) => onChange({ sunlight: value })}
-      />
 
       <OptionGrid
         legend="Garden type"
@@ -222,7 +175,7 @@ export function GrowingSpaceForm({
           <div className="flex-1">
             <p className="text-sm font-medium text-forest">Upload a photo of your yard or balcony</p>
             <p className="text-xs text-ink-faint">
-              Coming soon — image analysis will estimate sunlight and usable area automatically.
+              Coming soon — image analysis will measure your actual sun exposure and usable area.
             </p>
           </div>
           <button type="button" className="btn-secondary !py-2 !text-xs" disabled>

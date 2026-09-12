@@ -11,7 +11,7 @@ const FLOW = [
   },
   {
     step: "What you can grow",
-    body: "Your plot size, sunlight, budget and experience decide which of those ingredients are realistic to grow — and how many plants of each.",
+    body: "Your plot size, budget, experience and — from your ZIP — your real frost dates decide which of those ingredients are realistic to grow, and how many of each.",
     icon: <SunIcon className="h-5 w-5" />,
   },
   {

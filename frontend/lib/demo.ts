@@ -15,10 +15,10 @@ export const DEMO_FREE_TEXT =
   "We make tacos twice a week, pasta a few times a week, salads for lunch, and eggs most mornings.";
 
 export const DEMO_SPACE: GrowingSpace = {
-  location: "Demo City, US",
-  zip_code: "00000",
+  // A real ZIP, so the demo pulls genuine frost dates and forecast.
+  location: "Austin, Texas",
+  zip_code: "78704",
   plot: { width_ft: 12, length_ft: 8, unit: "ft" },
-  sunlight: "full-sun",
   garden_type: "raised-beds",
   experience: "beginner",
   budget_usd: 150,

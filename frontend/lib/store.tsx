@@ -25,11 +25,13 @@ import {
 
 import { DEMO_FREE_TEXT, DEMO_HOUSEHOLD_SIZE, DEMO_MEALS, DEMO_SPACE } from "./demo";
 import type {
+  Climate,
   ExtractedIngredient,
   GenerateLayoutResponse,
   GrowingSpace,
   Meal,
   RecommendCropsResponse,
+  ResolvedLocation,
 } from "./types";
 
 const STORAGE_KEY = "gardenai.demo.v1";
@@ -42,7 +44,12 @@ export interface GardenState {
   /** `generated_by` from /api/analyze-food — which extractor actually ran. */
   ingredientsSource: string | null;
   space: GrowingSpace;
+  /** Resolved from the city/ZIP via /api/location. */
+  location: ResolvedLocation | null;
+  climate: Climate | null;
   recommendations: RecommendCropsResponse | null;
+  /** Crop ids the user has chosen to actually plant. */
+  selectedCropIds: string[];
   layout: GenerateLayoutResponse | null;
   /** True once the API answered with bundled data instead of a live backend. */
   offlineMode: boolean;
@@ -55,7 +62,10 @@ const EMPTY_STATE: GardenState = {
   ingredients: [],
   ingredientsSource: null,
   space: { ...DEMO_SPACE, location: "", zip_code: "" },
+  location: null,
+  climate: null,
   recommendations: null,
+  selectedCropIds: [],
   layout: null,
   offlineMode: false,
 };
@@ -152,10 +162,15 @@ export function useGardenStore(): GardenStore {
 export function derivePlantings(
   recommendations: RecommendCropsResponse | null,
   seasonDay: number,
+  selectedCropIds: string[] = [],
 ): { crop_id: string; days_since_planting: number }[] {
   if (!recommendations) return [];
-  return recommendations.recommendations.map((crop) => ({
-    crop_id: crop.crop_id,
-    days_since_planting: Math.max(0, seasonDay),
-  }));
+  return recommendations.recommendations
+    .filter(
+      (crop) => selectedCropIds.length === 0 || selectedCropIds.includes(crop.crop_id),
+    )
+    .map((crop) => ({
+      crop_id: crop.crop_id,
+      days_since_planting: Math.max(0, seasonDay),
+    }));
 }

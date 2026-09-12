@@ -1,24 +1,13 @@
 "use client";
 
-import { cx } from "@/lib/format";
-import type { SunlightLevel } from "@/lib/types";
-
-const SUN_TINT: Record<SunlightLevel, string> = {
-  "full-sun": "from-[#FBF3DC] to-[#EFF5E7]",
-  "partial-sun": "from-[#F3F4E6] to-[#E9F0E6]",
-  "mostly-shade": "from-[#E7EBE9] to-[#DFE7E2]",
-};
-
 /** Scaled rectangle preview of the plot, updated live as dimensions change. */
 export function PlotPreview({
   width,
   length,
-  sunlight = "full-sun",
   gardenTypeLabel,
 }: {
   width: number;
   length: number;
-  sunlight?: SunlightLevel;
   gardenTypeLabel?: string;
 }) {
   const safeWidth = Math.max(1, width || 1);
@@ -39,10 +28,7 @@ export function PlotPreview({
 
       <div className="relative flex aspect-[4/3] items-center justify-center rounded-xl bg-cream-deep/70 p-6">
         <div
-          className={cx(
-            "relative rounded-lg border-2 border-dashed border-moss/50 bg-gradient-to-br shadow-inset",
-            SUN_TINT[sunlight],
-          )}
+          className="relative rounded-lg border-2 border-dashed border-moss/50 bg-gradient-to-br from-[#F5F7EE] to-[#E9F0E6] shadow-inset"
           style={{
             width: `${boxWidth}%`,
             height: `${boxHeight}%`,
