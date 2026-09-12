@@ -55,8 +55,19 @@ export interface GardenState {
    *  Written by voice commands and read when building the layout request. */
   plantCounts: Record<string, number>;
   layout: GenerateLayoutResponse | null;
-  /** True once the API answered with bundled data instead of a live backend. */
-  offlineMode: boolean;
+  /**
+   * Whether each stored artifact came from bundled fallback data rather than
+   * the live backend.
+   *
+   * Deliberately one flag per artifact, not a single global boolean. A global
+   * one is sticky and mislabels things: it survives in localStorage from an
+   * earlier session, so a page can show "the backend wasn't reachable" while
+   * the backend is demonstrably fine — and it can't distinguish stale
+   * recommendations from a fresh layout.
+   */
+  ingredientsOffline: boolean;
+  recommendationsOffline: boolean;
+  layoutOffline: boolean;
 }
 
 const EMPTY_STATE: GardenState = {
@@ -72,7 +83,9 @@ const EMPTY_STATE: GardenState = {
   selectedCropIds: [],
   plantCounts: {},
   layout: null,
-  offlineMode: false,
+  ingredientsOffline: false,
+  recommendationsOffline: false,
+  layoutOffline: false,
 };
 
 interface GardenStore {

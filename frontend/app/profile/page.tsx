@@ -85,9 +85,9 @@ export default function FoodProfilePage() {
         />
       </div>
 
-      {state.offlineMode ? (
+      {state.ingredientsOffline ? (
         <div className="mt-6">
-          <OfflineNotice message="This profile is the bundled demo extraction, not a fresh one — the backend wasn't reachable. Start it to analyze your own meals." />
+          <OfflineNotice message="This profile is the bundled demo extraction, not a fresh one. Re-run the food step to analyze your own meals." />
         </div>
       ) : null}
 

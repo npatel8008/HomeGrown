@@ -99,7 +99,9 @@ export default function GrowingSpacePage() {
       climate: result.data.climate ?? state.climate,
       // Everything is selected to begin with; the user prunes from there.
       selectedCropIds: result.data.recommendations.map((crop) => crop.crop_id),
-      offlineMode: result.usedFallback,
+      recommendationsOffline: result.usedFallback,
+      // A new plan invalidates any previous layout provenance.
+      layoutOffline: false,
       // A new plan invalidates the old layout.
       layout: null,
     });

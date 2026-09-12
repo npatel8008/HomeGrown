@@ -30,7 +30,7 @@ export default function FoodOnboardingPage() {
     update({
       ingredients: result.data.ingredients,
       ingredientsSource: result.data.generated_by,
-      offlineMode: result.usedFallback,
+      ingredientsOffline: result.usedFallback,
     });
     setBusy(false);
     if (result.usedFallback) setNotice(result.error);

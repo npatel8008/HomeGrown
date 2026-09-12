@@ -65,7 +65,7 @@ export default function RecommendationsPage() {
       // counts set by voice survive a regeneration from this page.
       crops: layoutCropsFor({ selectedCropIds: selectedIds, plantCounts: state.plantCounts }, data),
     });
-    update({ layout: result.data, offlineMode: result.usedFallback });
+    update({ layout: result.data, layoutOffline: result.usedFallback });
     setBusy(false);
     if (result.usedFallback) setNotice(result.error);
     router.push("/garden");
@@ -126,9 +126,9 @@ export default function RecommendationsPage() {
           <OfflineNotice message={notice} />
         </div>
       ) : null}
-      {state.offlineMode && !notice ? (
+      {state.recommendationsOffline && !notice ? (
         <div className="mt-6">
-          <OfflineNotice message="These numbers came from the bundled demo dataset because the backend wasn't reachable." />
+          <OfflineNotice message="These numbers came from the bundled demo dataset, not your backend. Regenerate from your growing space to use live data." />
         </div>
       ) : null}
 

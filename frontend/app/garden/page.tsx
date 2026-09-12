@@ -36,7 +36,7 @@ export default function GardenPlanPage() {
         state.recommendations,
       ),
     });
-    update({ layout: result.data, offlineMode: result.usedFallback });
+    update({ layout: result.data, layoutOffline: result.usedFallback });
     setSelected(null);
     setBusy(false);
     setNotice(result.usedFallback ? result.error : undefined);

@@ -52,7 +52,7 @@ export function useVoiceGarden() {
         garden_type: state.space.garden_type,
         crops,
       });
-      update({ ...selection, layout: result.data, offlineMode: result.usedFallback });
+      update({ ...selection, layout: result.data, layoutOffline: result.usedFallback });
     },
     [state.recommendations, state.space, update],
   );
