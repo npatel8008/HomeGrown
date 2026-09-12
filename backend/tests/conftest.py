@@ -11,6 +11,17 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND_ROOT))
 
+# `main` calls load_dotenv(backend/.env) at import, which happily supplies the
+# real IFM and ElevenLabs keys to the test run. Every score_crops() call then
+# made a live K2 request: the suite took 141s, burned quota on every run, and
+# failed without a network. Setting the keys empty here is enough — dotenv does
+# not override a name already present in the environment.
+#
+# With these unset the same 27 feasibility tests run in 1.3s instead of 141s.
+os.environ["IFM_API_KEY"] = ""
+os.environ["ELEVENLABS_API_KEY"] = ""
+os.environ["GARDENAI_LLM_REASONS"] = "0"
+
 os.environ["INTERNAL_API_SECRET"] = "test-secret-not-used-anywhere-real"
 os.environ["MONGODB_URI"] = "mongodb://mongomock-in-memory/gardenai"
 os.environ.pop("AUTH0_DOMAIN", None)

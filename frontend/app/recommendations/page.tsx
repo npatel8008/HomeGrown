@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { generateLayout, recommendCrops } from "@/lib/api";
 import { layoutCropsFor } from "@/lib/garden-commands";
 import { summarizeSelection } from "@/lib/selection";
+import type { SkippedCrop } from "@/lib/types";
 import { useGardenStore } from "@/lib/store";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProgressHeader } from "@/components/layout/ProgressHeader";
@@ -225,28 +226,7 @@ export default function RecommendationsPage() {
               ))}
             </div>
 
-            {data.skipped.length > 0 ? (
-              <div className="mt-6 rounded-card border border-line bg-white/70 px-5 py-4">
-                <p className="mb-2.5 text-xs font-semibold text-forest">Left out this season</p>
-                <ul className="space-y-1.5">
-                  {data.skipped.map((item) => (
-                    <li key={item.crop_id} className="flex flex-wrap items-baseline gap-2 text-xs">
-                      <span className="font-medium text-forest">{item.name}</span>
-                      <span
-                        className={
-                          item.kind === "climate"
-                            ? "rounded-pill bg-[#FBEDE3] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#A0522A]"
-                            : "rounded-pill bg-cream-deep px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-faint"
-                        }
-                      >
-                        {item.kind}
-                      </span>
-                      <span className="text-ink-muted">{item.reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+            {data.skipped.length > 0 ? <SkippedCrops skipped={data.skipped} /> : null}
           </section>
 
           <div className="mt-10 flex flex-wrap justify-end gap-3">
@@ -264,6 +244,74 @@ export default function RecommendationsPage() {
             </button>
           </div>
         </>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Why crops were left out.
+ *
+ * With a 245-crop library nearly everything is "left out", so listing them all
+ * buries the two reasons worth reading. Climate and demand say something about
+ * *this* garden — it won't survive here, you don't eat it. Running out of space
+ * is the default state of a finite plot, so it gets a count, not 241 rows.
+ */
+function SkippedCrops({ skipped }: { skipped: SkippedCrop[] }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const byKind = {
+    climate: skipped.filter((item) => item.kind === "climate"),
+    demand: skipped.filter((item) => item.kind === "demand"),
+    space: skipped.filter((item) => item.kind === "space"),
+  };
+
+  // Only the informative kinds are listed, and only a handful unless asked.
+  const notable = [...byKind.climate, ...byKind.demand];
+  const shown = expanded ? notable : notable.slice(0, 6);
+
+  return (
+    <div className="mt-6 rounded-card border border-line bg-white/70 px-5 py-4">
+      <p className="text-xs font-semibold text-forest">Left out this season</p>
+
+      <p className="mt-1 text-xs text-ink-muted">
+        {[
+          byKind.climate.length > 0 ? `${byKind.climate.length} won't survive your climate` : null,
+          byKind.demand.length > 0 ? `${byKind.demand.length} your household rarely eats` : null,
+          byKind.space.length > 0 ? `${byKind.space.length} ran out of room or budget` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+
+      {shown.length > 0 ? (
+        <ul className="mt-3 space-y-1.5">
+          {shown.map((item) => (
+            <li key={item.crop_id} className="flex flex-wrap items-baseline gap-2 text-xs">
+              <span className="font-medium text-forest">{item.name}</span>
+              <span
+                className={
+                  item.kind === "climate"
+                    ? "rounded-pill bg-[#FBEDE3] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#A0522A]"
+                    : "rounded-pill bg-cream-deep px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-faint"
+                }
+              >
+                {item.kind}
+              </span>
+              <span className="text-ink-muted">{item.reason}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {notable.length > shown.length || expanded ? (
+        <button
+          type="button"
+          className="mt-3 text-xs font-semibold text-moss-dark underline-offset-4 hover:underline"
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? "Show fewer" : `Show all ${notable.length}`}
+        </button>
       ) : null}
     </div>
   );
