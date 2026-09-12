@@ -1,0 +1,64 @@
+# Render Blueprint for the GardenAI FastAPI backend.
+#
+# The frontend stays on Vercel. Only this backend lives here, because it needs
+# a *persistent* process: the AI endpoints run 7-15s (too long for most
+# serverless duration caps) and the in-process climate/forecast caches turn a
+# ~1s lookup into ~3ms, which only pays off if the process stays alive.
+#
+# Secrets are marked `sync: false`, so they are entered in the Render dashboard
+# and never committed here. See docs/DEPLOYING.md.
+
+services:
+  - type: web
+    name: gardenai-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    region: ohio
+
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+    # Render restarts the service if this stops returning 2xx. It also reports
+    # which subsystems are live, which makes a bad deploy obvious immediately.
+    healthCheckPath: /api/health
+
+    envVars:
+      # A modern interpreter, deliberately: the local Anaconda 3.9 ships
+      # OpenSSL 1.1.1 from 2021, and old TLS stacks are a recurring source of
+      # MongoDB Atlas handshake failures.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+
+      # --- Per-account storage -------------------------------------------
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: gardenai
+      - key: MONGODB_TIMEOUT_MS
+        value: "5000"
+
+      # --- Who is calling -------------------------------------------------
+      # Must be byte-identical to INTERNAL_API_SECRET in the Vercel project.
+      - key: INTERNAL_API_SECRET
+        sync: false
+
+      # --- Ingredient extraction and crop rationales ----------------------
+      # Optional. Without it both fall back to their offline implementations
+      # and the UI says so; nothing breaks.
+      - key: IFM_API_KEY
+        sync: false
+      - key: IFM_MODEL_STRUCTURED
+        value: IFM/K2-Think-v2
+      - key: IFM_MODEL_PROSE
+        value: IFM/K2-Horizon-375B-A23B
+      - key: IFM_TIMEOUT
+        value: "25"
+
+      # --- CORS -------------------------------------------------------------
+      # Belt and braces only. The browser never calls this service directly:
+      # Vercel proxies /api/* server-side via next.config.mjs rewrites, and
+      # /api/me/* through its own route handler. Set it to your Vercel origin
+      # anyway, in case anything is ever called from the browser.
+      - key: ALLOWED_ORIGINS
+        sync: false

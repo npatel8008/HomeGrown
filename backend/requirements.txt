@@ -6,6 +6,11 @@ python-dotenv==1.0.1
 # Per-account storage and token verification.
 pymongo==4.10.1
 pyjwt[crypto]==2.10.1
+# Pinned deliberately. pyjwt[crypto] only asks for cryptography>=3.4.0, so an
+# unpinned resolve grabs the newest release — which may ship source-only for a
+# given platform and then needs a Rust toolchain to build. That turns a deploy
+# into a coin flip. Pin it so every environment installs the same wheel.
+cryptography==48.0.1
 
 # Multipart uploads for the voice endpoint.
 python-multipart==0.0.20

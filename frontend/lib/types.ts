@@ -428,7 +428,8 @@ export interface InterpretResponse {
   commands: GardenCommand[];
   descriptions: string[];
   understood: boolean;
-
+  generated_by: string;
+}
 
 /* ------------------------------------------------------------------ */
 /* 6. Growth schedule — POST /api/me/garden/start, GET /api/me/schedule */
