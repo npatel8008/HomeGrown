@@ -7,10 +7,12 @@
  *
  *   Android / Chrome  — yes. WebXR `immersive-ar` is backed by ARCore, which
  *                       gives 6DOF tracking, plane detection and hit testing.
- *   iOS / Safari      — no. Apple has never shipped WebXR `immersive-ar`. No
- *                       amount of JavaScript changes that; the only true AR on
- *                       iOS Safari is AR Quick Look, which needs a USDZ file
- *                       and takes over the screen.
+ *   iOS (any browser) — no. Apple has never shipped WebXR `immersive-ar`, and
+ *                       every iOS browser is required to use WebKit, so Chrome
+ *                       and Firefox there are Safari with a different toolbar
+ *                       and inherit the same gap. The only true AR on iOS is
+ *                       AR Quick Look, which needs a USDZ file and takes over
+ *                       the screen.
  *   Desktop           — no, and there is no camera pose to track anyway.
  *
  * Everything else — orientation-only overlays included — is a preview, not

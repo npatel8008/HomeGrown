@@ -110,8 +110,10 @@ practice means **Chrome on an Android device with ARCore**. You get plane
 detection, a placement reticle, tap-to-place, world anchoring and 6DOF
 tracking: place the garden on the floor and walk around it while it stays put.
 
-**Preview mode** is everything else, including **Safari on iOS** — Apple has
-never shipped WebXR `immersive-ar`. The preview composites the garden over the
+**Preview mode** is everything else, including **every browser on iOS**. Apple
+has never shipped WebXR `immersive-ar`, and iOS requires all browsers to use
+WebKit — so Chrome, Firefox and Edge on an iPhone are Safari underneath and
+share the same gap. Installing a different browser does not help. The preview composites the garden over the
 camera feed and tracks the phone's *rotation* only, so looking around works but
 walking does not move you relative to the garden. The UI says so rather than
 letting you discover it by walking.

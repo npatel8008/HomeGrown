@@ -71,7 +71,7 @@ function PreviewNotice() {
           <p className="font-semibold">Preview mode — not world-tracked AR</p>
           <p className="mt-1 text-xs leading-relaxed">
             {ios
-              ? "Safari on iOS doesn't support WebXR, so the garden can only follow the phone's rotation. Look around and it holds its bearing, but walking won't move you relative to it. Chrome on an Android device gives the full version: tap the floor to place the garden and walk around it."
+              ? "iOS has no WebXR, so the garden can only follow the phone's rotation — look around and it holds its bearing, but walking won't move you relative to it. Switching browsers won't help: Chrome, Firefox and Edge on iOS are all required to use Safari's engine, so they share the same limitation. World-tracked AR needs Chrome on an Android device."
               : "This device or browser has no WebXR AR support, so the garden follows the phone's rotation only — walking won't move you relative to it. Chrome on a recent Android phone gives the full version."}
           </p>
         </div>
