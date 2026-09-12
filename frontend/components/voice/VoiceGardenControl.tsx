@@ -36,14 +36,6 @@ export function VoiceGardenControl() {
         Try &ldquo;add basil and mint&rdquo;, &ldquo;remove the kale&rdquo;, &ldquo;six
         tomatoes&rdquo;, &ldquo;double the lettuce&rdquo;, or &ldquo;undo&rdquo;.
       </p>
-      {voice.engine === "browser" ? (
-        <p className="mt-1 text-[11px] text-ink-faint">
-          Using this browser&apos;s speech recognition — set{" "}
-          <code className="rounded bg-cream-deep px-1 py-0.5">ELEVENLABS_API_KEY</code> on the
-          backend for ElevenLabs.
-        </p>
-      ) : null}
-
       {!voice.micUnavailable ? (
         <button
           type="button"
@@ -71,6 +63,47 @@ export function VoiceGardenControl() {
         </button>
       ) : null}
 
+      {!voice.micUnavailable ? (
+        <div
+          aria-live="polite"
+          className={cx(
+            "mt-3 rounded-xl border px-3.5 py-2.5 transition-colors",
+            voice.transcript
+              ? "border-sage-deep bg-sage-tint"
+              : "border-dashed border-line bg-white/60",
+          )}
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
+              {voice.phase === "listening" ? "Listening…" : "Heard"}
+            </span>
+            {/* Which recogniser produced this. Small, but the difference
+                between "it misheard me" and "it never reached ElevenLabs". */}
+            <span className="text-[10px] uppercase tracking-wide text-ink-faint">
+              {voice.engine === "elevenlabs"
+                ? "ElevenLabs"
+                : voice.engine === "browser"
+                  ? "Browser"
+                  : ""}
+            </span>
+          </div>
+          <p
+            className={cx(
+              "mt-1 text-sm leading-snug",
+              voice.transcript ? "font-medium text-forest" : "italic text-ink-faint",
+            )}
+          >
+            {voice.transcript
+              ? `“${voice.transcript}”`
+              : voice.phase === "listening"
+                ? "Speak now — your words will appear here."
+                : voice.phase === "thinking"
+                  ? "Transcribing…"
+                  : "Nothing captured yet."}
+          </p>
+        </div>
+      ) : null}
+
       <form
         className="mt-3 flex gap-2"
         onSubmit={(event) => {
@@ -91,12 +124,6 @@ export function VoiceGardenControl() {
           Apply
         </button>
       </form>
-
-      {voice.transcript ? (
-        <p className="mt-3 rounded-xl bg-sage-tint px-3.5 py-2.5 text-sm italic text-forest">
-          &ldquo;{voice.transcript}&rdquo;
-        </p>
-      ) : null}
 
       {voice.problem ? <p className="mt-2 text-xs text-[#A0522A]">{voice.problem}</p> : null}
 
