@@ -384,10 +384,9 @@ Two places:
   still `localStorage` until this swap.
 
 ### 6. Computer vision
-`frontend/components/space/GrowingSpaceForm.tsx` has a disabled photo-upload
-placeholder. Image analysis (estimating usable area and sun exposure from a
-yard photo) would become a fifth service, `services/space_analysis.py`, with
-its own endpoint. Do not fold it into the existing four.
+Image analysis — estimating usable area and sun exposure from a photo of the
+yard — would become its own service, `services/space_analysis.py`, with its own
+endpoint. Do not fold it into the existing four.
 
 ---
 
@@ -494,10 +493,9 @@ than existed. Local climate — frost dates, degree-days, summer temperatures �
 is measurable and now does that work instead.
 
 `sunlight_hours` remains in `crops.json` because it is a real property of each
-crop. It is simply unused until there is something real to compare it against:
-the photo-upload placeholder in the growing-space form is where a measured sun
-exposure would come from, and `crop_scoring._climate_fit()` is where it would
-slot back in.
+crop. It is simply unused until there is something real to compare it against —
+a measured exposure figure, from photo or site analysis. `_climate_fit()` in
+`crop_scoring.py` is where it would slot back in.
 
 ## Known limitations
 

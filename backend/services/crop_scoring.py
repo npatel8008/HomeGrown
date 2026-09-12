@@ -165,9 +165,8 @@ def _climate_fit(crop: dict, request: RecommendCropsRequest, climate: ClimatePro
     There is deliberately no "how sunny is your yard" input. Self-reported
     sunlight was a guess dressed up as data, and the crop dataset's
     `sunlight_hours` is only meaningful against a real measurement or a
-    shade analysis of the actual plot — neither of which we have. When photo
-    analysis lands (see the growing-space form's upload placeholder), a
-    measured exposure figure belongs right here.
+    shade analysis of the actual plot — neither of which we have. If a
+    measured exposure figure ever exists, it belongs right here.
     """
     season_score, fits, note = _season_fit(crop, climate)
     temperature = _temperature_fit(crop, climate)

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { cx } from "@/lib/format";
 import type { ExperienceLevel, GardenType, GrowingSpace, WaterAccess } from "@/lib/types";
-import { CameraIcon } from "@/components/ui/Icons";
 
 export const GARDEN_TYPE_OPTIONS: { value: GardenType; label: string }[] = [
   { value: "in-ground", label: "In-ground" },
@@ -201,24 +200,6 @@ export function GrowingSpaceForm({
         </div>
       </div>
 
-      {/* Placeholder only — no image processing in the scaffold. */}
-      <div>
-        <span className="label">Photo of your space (optional)</span>
-        <div className="flex items-center gap-4 rounded-card border border-dashed border-line bg-white/60 px-4 py-5">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sage text-forest">
-            <CameraIcon />
-          </span>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-forest">Upload a photo of your yard or balcony</p>
-            <p className="text-xs text-ink-faint">
-              Coming soon — image analysis will measure your actual sun exposure and usable area.
-            </p>
-          </div>
-          <button type="button" className="btn-secondary !py-2 !text-xs" disabled>
-            Upload
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

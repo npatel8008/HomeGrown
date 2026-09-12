@@ -123,6 +123,7 @@ const anchorMatrix = new THREE.Matrix4();
 function AnchoredGarden({
   placement,
   anchor,
+  yawRef,
   size,
   layout,
   selectedId,
@@ -132,6 +133,8 @@ function AnchoredGarden({
 }: {
   placement: WorldPlacement;
   anchor: XRAnchor | null;
+  /** Live rotation about Y. A ref, so the slider costs nothing to drag. */
+  yawRef: React.MutableRefObject<number>;
   size: number;
   layout: GenerateLayoutResponse;
   selectedId: string | null;
@@ -147,7 +150,13 @@ function AnchoredGarden({
   // is corrected along with it. Without one the placement is still fixed in
   // the reference space, which is close but can drift over a long session.
   useFrame((_state, _delta, frame) => {
-    if (!group.current || !anchor || !frame) return;
+    if (!group.current) return;
+
+    // Rotation is applied every frame regardless of anchoring, so the slider
+    // stays live on devices with no anchor support.
+    group.current.rotation.set(0, yawRef.current, 0);
+
+    if (!anchor || !frame) return;
     const referenceSpace = gl.xr.getReferenceSpace();
     if (!referenceSpace) return;
 
@@ -157,17 +166,10 @@ function AnchoredGarden({
     anchorMatrix.fromArray(pose.transform.matrix);
     anchorMatrix.decompose(anchorPosition, anchorQuaternion, anchorScale);
     group.current.position.copy(anchorPosition);
-    // Yaw only, again: the anchor may carry a tilt we do not want.
-    group.current.rotation.set(0, placement.yaw, 0);
   });
 
   return (
-    <group
-      ref={group}
-      position={placement.position}
-      rotation={[0, placement.yaw, 0]}
-      visible={placement.placed}
-    >
+    <group ref={group} position={placement.position} visible={placement.placed}>
       <group scale={FEET_TO_METRES * size}>
         <GardenSceneContent
           layout={layout}
@@ -197,6 +199,7 @@ function Session({
   reducedMotion,
   placement,
   setPlacement,
+  yawRef,
   onTrackingChange,
   placeSignal,
 }: {
@@ -208,6 +211,7 @@ function Session({
   reducedMotion: boolean;
   placement: WorldPlacement;
   setPlacement: (next: WorldPlacement) => void;
+  yawRef: React.MutableRefObject<number>;
   onTrackingChange: (hasSurface: boolean) => void;
   /** Bumped by the overlay's "Place" button. */
   placeSignal: number;
@@ -285,6 +289,7 @@ function Session({
       <AnchoredGarden
         placement={placement}
         anchor={anchor}
+        yawRef={yawRef}
         size={size}
         layout={layout}
         selectedId={selectedId}

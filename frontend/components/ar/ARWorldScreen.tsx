@@ -44,6 +44,11 @@ export function ARWorldScreen({
   const [hasSurface, setHasSurface] = useState(false);
   const [selected, setSelected] = useState<PlacedPlant | null>(null);
   const [placeSignal, setPlaceSignal] = useState(0);
+  // Live yaw. State would re-render every plant on each drag step; the scene
+  // reads this ref in its frame loop instead. `yawDegrees` exists only to
+  // drive the slider thumb and its label.
+  const yawRef = useRef(0);
+  const [yawDegrees, setYawDegrees] = useState(0);
   const [inSession, setInSession] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
@@ -53,12 +58,13 @@ export function ARWorldScreen({
   const reset = useCallback(() => {
     setPlacement(createWorldPlacement());
     setSelected(null);
+    yawRef.current = 0;
+    setYawDegrees(0);
   }, []);
 
-  const rotate = useCallback((radians: number) => {
-    setPlacement((previous) =>
-      previous.placed ? { ...previous, yaw: previous.yaw + radians } : previous,
-    );
+  const setYaw = useCallback((degrees: number) => {
+    yawRef.current = THREE.MathUtils.degToRad(degrees);
+    setYawDegrees(degrees);
   }, []);
 
   const resize = useCallback((factor: number) => {
@@ -139,6 +145,7 @@ export function ARWorldScreen({
         reducedMotion={reducedMotion}
         placement={placement}
         setPlacement={setPlacement}
+        yawRef={yawRef}
         onTrackingChange={setHasSurface}
         placeSignal={placeSignal}
       />
@@ -203,9 +210,28 @@ export function ARWorldScreen({
         ) : null}
 
         {inSession && placement.placed ? (
+          <div className="pointer-events-auto mx-auto flex w-full max-w-sm items-center gap-3 rounded-2xl bg-black/65 px-4 py-2.5 backdrop-blur">
+            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-white">
+              Rotate
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={360}
+              step={1}
+              value={yawDegrees}
+              aria-label="Rotate the garden"
+              className="min-w-0 flex-1"
+              onChange={(event) => setYaw(Number(event.target.value))}
+            />
+            <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-white/80">
+              {yawDegrees}°
+            </span>
+          </div>
+        ) : null}
+
+        {inSession && placement.placed ? (
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <ControlButton onClick={() => rotate(-Math.PI / 8)}>Rotate ↺</ControlButton>
-            <ControlButton onClick={() => rotate(Math.PI / 8)}>Rotate ↻</ControlButton>
             <ControlButton onClick={() => resize(1 / 1.25)}>Smaller</ControlButton>
             <ControlButton onClick={() => resize(1.25)}>Bigger</ControlButton>
             <ControlButton onClick={reset}>Move it</ControlButton>
