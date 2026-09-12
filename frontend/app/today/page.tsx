@@ -17,7 +17,7 @@ import type {
   TaskCategory,
 } from "@/lib/types";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { CareRecordCard } from "@/components/today/CareRecordCard";
+import { SeasonStartControl } from "@/components/today/SeasonStartControl";
 import { GardenTaskCard } from "@/components/today/GardenTaskCard";
 import { WeatherCard } from "@/components/today/WeatherCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -127,6 +127,21 @@ export default function TodayPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.6fr] lg:items-start">
         <div className="space-y-4 lg:sticky lg:top-24">
+          <SeasonStartControl
+            schedule={sched.schedule}
+            state={sched.state}
+            starting={sched.starting}
+            onApply={async (date) => {
+              const result = await sched.start(date);
+              if (result.data) return null;
+              if (result.state === "signed-out") return "Sign in to save a planting date.";
+              return (
+                result.error ??
+                "Couldn't set the date. Build and save a garden plan first."
+              );
+            }}
+          />
+
           {weather ? <WeatherCard weather={weather} /> : null}
 
           {live || status ? (
@@ -170,8 +185,6 @@ export default function TodayPage() {
               ) : null}
             </section>
           ) : null}
-
-          <CareRecordCard summary={care_.summary} state={care_.state} />
 
           {!state.recommendations ? (
             <div className="card-quiet p-5 text-sm text-ink-muted">
