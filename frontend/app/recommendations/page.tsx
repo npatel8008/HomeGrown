@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { generateLayout, recommendCrops } from "@/lib/api";
 import { layoutCropsFor } from "@/lib/garden-commands";
 import { summarizeSelection } from "@/lib/selection";
-import type { SkippedCrop } from "@/lib/types";
+import type { CropRecommendation, ExtractedIngredient, SkippedCrop } from "@/lib/types";
 import { useGardenStore } from "@/lib/store";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProgressHeader } from "@/components/layout/ProgressHeader";
@@ -209,6 +209,12 @@ export default function RecommendationsPage() {
               </div>
             </div>
 
+            <MissingRequests
+              ingredients={state.ingredients}
+              recommendations={data.recommendations}
+              skipped={data.skipped}
+            />
+
             {selectedIds.length === 0 ? (
               <p className="mb-5 rounded-card border border-[#F0DDBB] bg-[#FDF7EC] px-5 py-4 text-sm text-[#7A5418]">
                 Nothing selected — pick at least one crop to generate a garden layout.
@@ -312,6 +318,58 @@ function SkippedCrops({ skipped }: { skipped: SkippedCrop[] }) {
         >
           {expanded ? "Show fewer" : `Show all ${notable.length}`}
         </button>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * "Where is my banana?"
+ *
+ * When a crop the household actually named gets dropped, the plan silently
+ * fills the ground with something else. Without this the substitution looks
+ * arbitrary — you asked about bananas and the page shows edamame. The reason
+ * already exists in `skipped`; it just wasn't being put in front of anyone.
+ */
+function MissingRequests({
+  ingredients,
+  recommendations,
+  skipped,
+}: {
+  ingredients: ExtractedIngredient[];
+  recommendations: CropRecommendation[];
+  skipped: SkippedCrop[];
+}) {
+  const asked = new Set(
+    ingredients.filter((item) => item.crop_id).map((item) => item.crop_id as string),
+  );
+  if (asked.size === 0) return null;
+
+  const planted = new Set(recommendations.map((crop) => crop.crop_id));
+  const dropped = skipped.filter((item) => asked.has(item.crop_id) && !planted.has(item.crop_id));
+  if (dropped.length === 0) return null;
+
+  const nothingAskedForMadeIt = recommendations.every((crop) => !crop.requested);
+
+  return (
+    <div className="mb-5 rounded-card border border-[#F0DDBB] bg-[#FDF7EC] px-5 py-4 text-sm text-[#7A5418]">
+      <p className="font-semibold">
+        {nothingAskedForMadeIt
+          ? "None of the crops you asked for fit this plot"
+          : `${dropped.length} crop${dropped.length === 1 ? "" : "s"} you asked for didn't fit`}
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {dropped.map((item) => (
+          <li key={item.crop_id} className="text-xs leading-relaxed">
+            <span className="font-medium">{item.name}</span> — {item.reason}
+          </li>
+        ))}
+      </ul>
+      {nothingAskedForMadeIt ? (
+        <p className="mt-2.5 text-xs leading-relaxed">
+          Everything below is filling ground that would otherwise sit empty. Try a larger plot, or
+          add more of what your household eats.
+        </p>
       ) : null}
     </div>
   );

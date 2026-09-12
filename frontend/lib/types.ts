@@ -148,6 +148,8 @@ export interface CropRecommendation {
   difficulty: Difficulty;
   water_requirement: string;
   space_required_sqft: number;
+  /** False when the crop was added to use spare ground, not asked for. */
+  requested: boolean;
   fits_season: boolean;
   season_note: string;
   color: string;

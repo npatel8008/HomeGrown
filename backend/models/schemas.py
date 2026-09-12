@@ -174,6 +174,10 @@ class CropRecommendation(BaseModel):
     water_requirement: str
     space_required_sqft: float
     #: True when the crop can reach harvest inside the local frost-free window.
+    #: True when the household's own food profile asked for this crop. False
+    #: means it was added to use ground that would otherwise sit empty, which
+    #: is a materially different claim and the UI says so.
+    requested: bool = True
     fits_season: bool = True
     season_note: str = ""
     color: str

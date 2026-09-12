@@ -503,6 +503,7 @@ def score_crops(request: RecommendCropsRequest) -> RecommendCropsResponse:
                 difficulty=Difficulty(crop["difficulty"]),
                 water_requirement=crop["water_requirement"],
                 space_required_sqft=round(used_area, 1),
+                requested=wanted_by_household,
                 fits_season=fits_season,
                 season_note=season_note,
                 color=crop["color"],

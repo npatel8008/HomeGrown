@@ -60,6 +60,12 @@ export function CropRecommendationCard({
             <h3 className="font-display text-xl leading-tight text-forest">{crop.name}</h3>
             <Badge tone="solid">#{crop.rank}</Badge>
             <DifficultyBadge difficulty={crop.difficulty} />
+            {!crop.requested ? (
+              // Nobody asked for this one; it is filling ground that would
+              // otherwise sit empty. Saying so stops it reading as a
+              // substitute for something the household actually wanted.
+              <Badge tone="neutral">Fills spare space</Badge>
+            ) : null}
           </div>
           <p className="mt-1 text-xs capitalize text-ink-faint">{crop.category.replace(/-/g, " ")}</p>
         </div>
