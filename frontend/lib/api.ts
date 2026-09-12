@@ -21,8 +21,18 @@ import type {
   RecommendCropsResponse,
 } from "./types";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
+// Empty by default, so every call is same-origin (`/api/...`). In development
+// `next.config.mjs` rewrites those to the FastAPI backend; for a deployment,
+// set NEXT_PUBLIC_API_URL to the backend's https:// origin.
+//
+// This used to default to http://localhost:8000, which quietly broke every
+// device that is not the machine running the backend — on a phone, "localhost"
+// is the phone. The fetch fails, `request()` catches it, and the app serves
+// bundled fallback data while looking perfectly healthy.
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
+
+// Only for error messages: "" is correct for fetch but unreadable in a banner.
+const API_TARGET_LABEL = API_BASE_URL || "this app's own origin (proxied to the backend)";
 
 // Generous, because the LLM-backed steps (ingredient extraction, crop
 // rationales) legitimately take 5-15s. A backend that is simply *down* fails
@@ -54,7 +64,7 @@ async function request<T>(path: string, init: RequestInit, offline: T): Promise<
     return {
       data: offline,
       usedFallback: true,
-      error: `Backend unreachable at ${API_BASE_URL} (${message}) — showing bundled demo data.`,
+      error: `Backend unreachable at ${API_TARGET_LABEL} (${message}) — showing bundled demo data.`,
     };
   } finally {
     clearTimeout(timer);

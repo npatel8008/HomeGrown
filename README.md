@@ -153,8 +153,24 @@ npm run dev
 
 Open <http://localhost:3000>.
 
-The frontend reads `NEXT_PUBLIC_API_URL` (default `http://localhost:8000`).
-Copy `frontend/.env.local.example` to `.env.local` to change it.
+`next.config.mjs` proxies `/api/*` to the backend on port 8000, so the frontend
+talks to its own origin and needs no configuration to run locally. Override the
+proxy target with `BACKEND_ORIGIN`, or bypass it entirely by setting
+`NEXT_PUBLIC_API_URL` to an absolute `https://` URL once the backend is deployed
+separately. Do not point it at `http://localhost:8000` — see
+[docs/RUNNING_ON_A_PHONE.md](docs/RUNNING_ON_A_PHONE.md).
+
+### On a phone
+
+Camera, motion and geolocation need HTTPS, so a phone cannot use
+`http://<your-ip>:3000`. Run a tunnel and open the URL it prints:
+
+```bash
+cloudflared tunnel --url http://localhost:3000
+```
+
+Full instructions, including why the API is proxied rather than tunneled
+separately: [docs/RUNNING_ON_A_PHONE.md](docs/RUNNING_ON_A_PHONE.md).
 
 ### The demo path
 
