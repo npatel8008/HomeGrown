@@ -22,10 +22,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <GardenStoreProvider>
+        {/* Scoped to the account, so switching users doesn't inherit the
+            previous one's garden from this browser. */}
+        <GardenStoreProvider userKey={user?.sub ?? null}>
           {/* Keeps the signed-in account's saved garden in step. Renders
-              nothing, and no-ops when signed out. */}
-          <GardenSync />
+              nothing, and no-ops when signed out. Keyed by account so a
+              user switch remounts it and its "adopt only into an empty
+              browser" guard re-evaluates. */}
+          <GardenSync key={user?.sub ?? "anon"} />
           <AppNav authEnabled={authEnabled} user={user} />
           <main className="pb-10">{children}</main>
           <Footer />

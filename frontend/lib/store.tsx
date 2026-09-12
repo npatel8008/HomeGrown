@@ -20,6 +20,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -35,7 +36,22 @@ import type {
   ResolvedLocation,
 } from "./types";
 
-const STORAGE_KEY = "gardenai.demo.v1";
+const STORAGE_PREFIX = "gardenai.demo.v1";
+
+/**
+ * Storage is scoped per account.
+ *
+ * A single shared key leaks one person's garden to the next person who signs
+ * in on the same machine: the browser keeps the previous account's plan, and
+ * GardenSync then refuses to adopt the new account's saved garden because the
+ * browser "isn't empty". Two accounts, one garden, no warning.
+ *
+ * The server was never the problem — every /api/me route is scoped by the
+ * token's subject. This is purely the browser's copy.
+ */
+function storageKeyFor(userKey: string | null): string {
+  return userKey ? `${STORAGE_PREFIX}:${userKey}` : `${STORAGE_PREFIX}:anon`;
+}
 
 export interface GardenState {
   householdSize: number;
@@ -126,28 +142,55 @@ interface GardenStore {
 
 const StoreContext = createContext<GardenStore | null>(null);
 
-export function GardenStoreProvider({ children }: { children: ReactNode }) {
+export function GardenStoreProvider({
+  children,
+  userKey = null,
+}: {
+  children: ReactNode;
+  /** Stable id of the signed-in account (Auth0 `sub`), or null when signed out. */
+  userKey?: string | null;
+}) {
   const [state, setState] = useState<GardenState>(EMPTY_STATE);
   const [hydrated, setHydrated] = useState(false);
+  // Which account the in-memory state belongs to, so a switch is detectable.
+  const loadedFor = useRef<string | null | undefined>(undefined);
 
+  // Re-runs when the account changes: drop the previous account's state and
+  // load this one's. Signing out falls back to the anonymous bucket.
   useEffect(() => {
+    if (loadedFor.current === userKey) return;
+    loadedFor.current = userKey;
+    setHydrated(false);
+
+    // The pre-scoping key belongs to nobody in particular — it could hold any
+    // account's garden. Handing it to whoever signs in next is the bug this
+    // change exists to fix, so drop it rather than guess. Signed-in accounts
+    // get theirs back from the server via GardenSync.
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setState(healState({ ...EMPTY_STATE, ...(JSON.parse(raw) as GardenState) }));
+      window.localStorage.removeItem(STORAGE_PREFIX);
+    } catch {
+      // Nothing to do if storage is unavailable.
+    }
+
+    let next = EMPTY_STATE;
+    try {
+      const raw = window.localStorage.getItem(storageKeyFor(userKey));
+      if (raw) next = healState({ ...EMPTY_STATE, ...(JSON.parse(raw) as GardenState) });
     } catch {
       // Corrupt or unavailable storage just means we start fresh.
     }
+    setState(next);
     setHydrated(true);
-  }, []);
+  }, [userKey]);
 
   useEffect(() => {
     if (!hydrated) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(storageKeyFor(userKey), JSON.stringify(state));
     } catch {
       // Private browsing / quota — the demo still works in memory.
     }
-  }, [state, hydrated]);
+  }, [state, hydrated, userKey]);
 
   const update = useCallback((patch: Partial<GardenState>) => {
     setState((previous) => ({ ...previous, ...patch }));
