@@ -16,7 +16,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 import type { GenerateLayoutResponse, PlacedPlant } from "@/lib/types";
@@ -29,6 +29,7 @@ import {
   type ArScale,
   type Placement,
 } from "./ARGardenView";
+import { ARVoiceControl } from "./ARVoiceControl";
 import { useCameraStream } from "./useCameraStream";
 import { useDeviceOrientation } from "./useDeviceOrientation";
 
@@ -59,6 +60,14 @@ export function ARScreen({
 
   const sensorsWorking = orientation.state === "granted";
   const cameraLive = camera.state === "live";
+
+  // A voice edit regenerates the layout and every plant id with it, so a
+  // details sheet left open would be describing a plant that no longer exists.
+  useEffect(() => {
+    setSelected((current) =>
+      current && layout?.plants.some((plant) => plant.id === current.id) ? current : null,
+    );
+  }, [layout]);
 
   const start = useCallback(async () => {
     setStarted(true);
@@ -267,6 +276,8 @@ export function ARScreen({
 
       {/* bottom controls */}
       <div className="absolute inset-x-0 bottom-0 space-y-3 p-4 pb-6">
+        {placement.placed ? <ARVoiceControl /> : null}
+
         {!placement.placed ? (
           <p className="mx-auto w-fit rounded-pill bg-black/55 px-4 py-2 text-xs text-white backdrop-blur">
             Point at the floor, then tap Place

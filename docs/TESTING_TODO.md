@@ -167,9 +167,11 @@ has never run against ElevenLabs** — there was no API key available.
   client function (`deleteMyData()` in `lib/api-me.ts`) both exist and are
   tested, but nothing on the account page calls them. Wire it up before anyone
   asks how to delete their data.
-- **Voice is not wired into the AR view.** It lives on the garden plan page;
-  saying "add basil" while looking at the garden through the camera is the
-  obvious next step and is not built.
+- **Voice in AR has not run on a real phone.** It was verified in a desktop
+  browser with a stubbed microphone and a stubbed transcription response. On a
+  phone, holding the mic button while the camera is live is the case to watch:
+  confirm the press does not also swing the view, and that iOS grants camera
+  and microphone in the same session.
 - **No spoken replies.** Confirmations are on-screen text only; ElevenLabs
   text-to-speech is not wired up.
 - **AR does not yet write to the care record.** Tapping a plant in AR shows its

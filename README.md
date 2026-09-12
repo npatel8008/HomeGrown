@@ -94,6 +94,9 @@ Audio goes to **ElevenLabs Scribe** for transcription
 planner — voice changes the *inputs*, it never invents plant positions, so a
 spoken edit produces exactly what clicking the same change would.
 
+The same control is in the AR view, so you can change the garden while looking
+at it through the camera — confirmations appear as captions, never spoken.
+
 Parsing is deterministic keyword/number matching and needs no API key; K2 is
 consulted only for phrasings the rules miss. Commands naming a crop that is not
 in `data/crops.json` are dropped rather than passed on, so a mis-hearing cannot

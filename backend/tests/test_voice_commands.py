@@ -152,3 +152,39 @@ def test_counts_are_clamped():
 def test_descriptions_are_human_readable():
     result = parse_request("add basil and remove the kale")
     assert result["descriptions"] == ["Added Basil", "Removed Kale"]
+
+
+def test_two_different_verbs_in_one_sentence():
+    """"add mint and double the tomatoes" is two instructions, not one applied twice.
+
+    Before the clause splitter knew about count verbs, the "double" leaked onto
+    the mint as well and planted eight of them.
+    """
+    result = parse_request("add mint and double the tomatoes")
+    by_crop = {command["crop_id"]: command for command in result["commands"]}
+
+    assert by_crop["mint"]["kind"] == "add_crop"
+    assert by_crop["tomato"]["kind"] == "scale_crop_count"
+    assert by_crop["tomato"]["factor"] == 2.0
+
+
+@pytest.mark.parametrize(
+    "said,expected_kinds",
+    [
+        ("add basil and more spinach", {"basil": "add_crop", "spinach": "adjust_crop_count"}),
+        ("remove the kale and add six tomatoes", {"kale": "remove_crop", "tomato": "set_crop_count"}),
+        ("halve the lettuce and get rid of the peas", {"lettuce": "scale_crop_count", "peas": "remove_crop"}),
+    ],
+)
+def test_mixed_instructions_stay_separate(said, expected_kinds):
+    result = parse_request(said)
+    by_crop = {command["crop_id"]: command["kind"] for command in result["commands"]}
+    for crop_id, kind in expected_kinds.items():
+        assert by_crop.get(crop_id) == kind, "%r gave %s" % (said, by_crop)
+
+
+def test_a_plain_list_of_crops_still_is_not_split():
+    """The fix must not break "basil and mint", which is one instruction."""
+    result = parse_request("add basil and mint")
+    assert {command["crop_id"] for command in result["commands"]} == {"basil", "mint"}
+    assert all(command["kind"] == "add_crop" for command in result["commands"])

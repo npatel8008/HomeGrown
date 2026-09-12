@@ -125,6 +125,14 @@ def _contains(text: str, needles) -> bool:
     return any(needle in text for needle in needles)
 
 
+_INSTRUCTION_VERBS = (
+    "add|remove|delete|plant|drop|get rid|include|put|give|grow|throw in|"
+    "double|halve|increase|reduce|scale|set|up the|cut back|cut the|skip|lose|take out|"
+    "more|less|fewer|extra|boost|i want|i don't want|i do not want|i hate|no more|without"
+)
+_AND_BEFORE_VERB = re.compile(r"\band\b(?=\s*(?:%s)\b)" % _INSTRUCTION_VERBS)
+
+
 def _split_clauses(transcript: str) -> List[str]:
     """"Add basil and remove the kale" is two instructions, not one."""
     lowered = transcript.lower().strip()
@@ -133,7 +141,12 @@ def _split_clauses(transcript: str) -> List[str]:
     # by only splitting on "and" when a verb follows it.
     expanded: List[str] = []
     for part in parts:
-        pieces = re.split(r"\band\b(?=\s*(?:add|remove|delete|plant|drop|get rid|include|put|give))", part)
+        # Split on "and" only when a verb follows it, so "basil and mint" stays
+        # one list of crops while "add basil and double the tomatoes" becomes
+        # two instructions. Every verb that can start an instruction has to be
+        # listed here — a missing one silently applies the wrong action to the
+        # crops on the other side of the "and".
+        pieces = re.split(_AND_BEFORE_VERB, part)
         expanded.extend(pieces)
     return [piece.strip() for piece in expanded if piece.strip()]
 
