@@ -17,6 +17,8 @@ or cares which one ran.
 
 import logging
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, NamedTuple, Optional
 
 from models.schemas import AnalyzeFoodRequest, ExtractedIngredient
@@ -294,8 +296,40 @@ def _coerce_ingredient(row: object) -> Optional[ExtractedIngredient]:
     )
 
 
+# One combined call covering every meal is the best answer when it works: the
+# model sees the whole week and can weigh ingredients against each other. But
+# K2-Think's reasoning length is unpredictable, and a long, multi-cuisine meal
+# list sometimes sends it past its token budget before it emits any JSON. It is
+# intermittent — "Borscht, Tacos, Fruit salad, Pav bhaji" failed three runs in a
+# row and then succeeded with 20 items — and each of those dishes asked about on
+# its own succeeded every time we measured.
+#
+# So when the combined call runs out of budget we ask one question per meal and
+# merge, rather than dropping to the keyword matcher. The matcher knows nothing
+# about borscht or pav bhaji and would answer them with lettuce and tomato.
+MAX_PER_MEAL_CALLS = 8
+PER_MEAL_STAGGER_SECONDS = 0.4
+
+# Beyond this many meals the combined call is the one that tends to run away, so
+# spend the timeout budget on the per-meal split instead of an identical retry.
+_SPLIT_PRONE_MEAL_COUNT = 3
+
+
 def _extract_with_llm(request: AnalyzeFoodRequest) -> Optional[List[ExtractedIngredient]]:
     """Returns None if the model is unavailable or its answer is unusable."""
+    attempts = 1 if len(request.meals) >= _SPLIT_PRONE_MEAL_COUNT else None
+    rows = _ask_combined(request, max_attempts=attempts)
+    if rows is None and len(request.meals) > 1:
+        logger.info("Combined extraction failed; asking per meal")
+        rows = _ask_per_meal(request)
+    if rows is None:
+        return None
+    return _rows_to_ingredients(rows)
+
+
+def _ask_combined(
+    request: AnalyzeFoodRequest, max_attempts: Optional[int] = None
+) -> Optional[List[object]]:
     payload = llm_client.complete_json(
         [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -303,15 +337,74 @@ def _extract_with_llm(request: AnalyzeFoodRequest) -> Optional[List[ExtractedIng
         ],
         model=llm_client.MODEL_STRUCTURED,
         temperature=0.1,
+        max_attempts=max_attempts,
     )
     if not payload:
         return None
-
     rows = payload.get("ingredients")
     if not isinstance(rows, list):
         logger.warning("LLM response had no 'ingredients' list")
         return None
+    return rows
 
+
+def _ask_per_meal(request: AnalyzeFoodRequest) -> Optional[List[object]]:
+    """One call per meal, in parallel, merged into a single weighted list.
+
+    Each call scores its own meal's ingredients 0-100 relative to that meal
+    alone. Weighting by times_per_week is what puts them back on a shared
+    household scale, so a dish eaten four times a week outranks a Sunday one.
+    """
+    meals = [meal for meal in request.meals if meal.name.strip()][:MAX_PER_MEAL_CALLS]
+    if not meals:
+        return None
+
+    def ask(indexed):
+        index, meal = indexed
+        # Firing every call on the same tick trips the provider's rate limiter
+        # and costs us a whole meal when both attempts land inside the window.
+        # A fraction of a second apart is enough, and still finishes in the time
+        # one sequential pass would have taken for two meals.
+        time.sleep(index * PER_MEAL_STAGGER_SECONDS)
+        single = AnalyzeFoodRequest(
+            household_size=request.household_size,
+            meals=[meal],
+            free_text=request.free_text if index == 0 else "",
+        )
+        return meal, _ask_combined(single)
+
+    with ThreadPoolExecutor(max_workers=len(meals)) as pool:
+        answers = list(pool.map(ask, enumerate(meals)))
+
+    # ingredient name -> [summed weight, first row seen]
+    merged: Dict[str, List[object]] = {}
+    for meal, rows in answers:
+        if not rows:
+            logger.info("Per-meal extraction failed for %r", meal.name)
+            continue
+        for row in rows:
+            item = _coerce_ingredient(row)
+            if item is None or item.weekly_usage_score <= 0:
+                continue
+            weight = item.weekly_usage_score / 100.0 * max(meal.times_per_week, 0.1)
+            key = item.ingredient.lower()
+            if key in merged:
+                merged[key][0] += weight
+            else:
+                merged[key] = [weight, item.ingredient]
+
+    if not merged:
+        return None
+
+    top = max(entry[0] for entry in merged.values()) or 1.0
+    logger.info("Per-meal extraction merged %d ingredients", len(merged))
+    return [
+        {"ingredient": name, "weekly_usage_score": int(round(weight / top * 100))}
+        for weight, name in sorted(merged.values(), key=lambda e: -e[0])
+    ]
+
+
+def _rows_to_ingredients(rows: List[object]) -> Optional[List[ExtractedIngredient]]:
     results: List[ExtractedIngredient] = []
     seen = set()
     for row in rows[:20]:

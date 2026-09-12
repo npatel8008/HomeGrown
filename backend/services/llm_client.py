@@ -116,9 +116,12 @@ def complete(
 
     if not content:
         # Almost always means the model spent its whole budget deliberating.
+        # Raising IFM_MAX_TOKENS does not help — measured 0/2 at 16k and 0/2
+        # at 32k on the same input. The model deliberates to fill whatever
+        # budget it is given. Ask a smaller question instead.
         raise LLMError(
             "Empty content (finish_reason=%s, %s completion tokens) — "
-            "shorten the prompt or raise IFM_MAX_TOKENS"
+            "ask a smaller question"
             % (choice.get("finish_reason"), (body.get("usage") or {}).get("completion_tokens"))
         )
 
@@ -205,13 +208,22 @@ def complete_json(
     model: Optional[str] = None,
     temperature: float = 0.2,
     max_tokens: Optional[int] = None,
+    max_attempts: Optional[int] = None,
 ) -> Optional[dict]:
     """Completion that must parse as a JSON object. Returns None on any failure.
 
     Callers treat None as "fall back to the deterministic implementation" —
     an LLM hiccup degrades the answer, it never breaks the request.
+
+    `max_attempts` overrides the default retry count. Retrying helps when the
+    model produced malformed JSON, because the nudge changes its behaviour. It
+    does not help when the model burned its whole budget deliberating: the
+    second attempt is the same question and runs away the same way. Callers
+    that have a better second strategy than "ask again" should pass 1 and
+    spend the saved timeout on that instead.
     """
-    for attempt in range(1, MAX_ATTEMPTS + 1):
+    attempts = max_attempts or MAX_ATTEMPTS
+    for attempt in range(1, attempts + 1):
         payload = list(messages) if attempt == 1 else list(messages) + [_NUDGE]
         try:
             raw = complete(
@@ -222,15 +234,15 @@ def complete_json(
                 json_mode=True,
             )
         except LLMError as error:
-            logger.warning("LLM attempt %d/%d failed: %s", attempt, MAX_ATTEMPTS, error)
+            logger.warning("LLM attempt %d/%d failed: %s", attempt, attempts, error)
             continue
 
         parsed = extract_json_object(raw)
         if parsed is not None:
             return parsed
         logger.warning(
-            "LLM attempt %d/%d returned unparseable JSON: %s", attempt, MAX_ATTEMPTS, raw[:200]
+            "LLM attempt %d/%d returned unparseable JSON: %s", attempt, attempts, raw[:200]
         )
 
-    logger.warning("LLM gave up after %d attempts, using offline fallback", MAX_ATTEMPTS)
+    logger.warning("LLM gave up after %d attempt(s)", attempts)
     return None
