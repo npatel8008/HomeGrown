@@ -9,7 +9,7 @@
  * survives on top of an immersive session.
  */
 
-import { ARButton } from "@react-three/xr";
+import { startSession, stopSession } from "@react-three/xr";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -19,6 +19,7 @@ import type { GenerateLayoutResponse, PlacedPlant } from "@/lib/types";
 import { PlantDetailsPanel } from "@/components/garden/PlantDetailsPanel";
 import type { ScaleChange } from "@/lib/use-voice-garden";
 import { ARVoiceControl } from "./ARVoiceControl";
+import { ARGrowthSlider } from "./ARGrowthSlider";
 import { ARWorldCanvas, createWorldPlacement, type WorldPlacement } from "./ARWorldView";
 import { arSessionInit } from "./useARSupport";
 
@@ -43,6 +44,8 @@ export function ARWorldScreen({
   const [hasSurface, setHasSurface] = useState(false);
   const [selected, setSelected] = useState<PlacedPlant | null>(null);
   const [placeSignal, setPlaceSignal] = useState(0);
+  const [inSession, setInSession] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   // Rebuilt once the overlay element exists, so the session is told about it.
   const sessionInit = useMemo(() => arSessionInit(overlay), [overlay]);
@@ -63,6 +66,39 @@ export function ARWorldScreen({
   }, []);
 
   const sizeLabel = size >= 0.99 ? "Life size" : `1:${Math.round(1 / size)}`;
+
+  /**
+   * Session control, driven here rather than by <ARButton>.
+   *
+   * The library button renders wherever it is placed in the flow, which meant
+   * "Exit AR" sat in the same wrapping row as rotate/resize/move and collided
+   * with them on a phone. Owning the session lets "Enter AR" be a centred
+   * call to action and "Exit AR" a corner chip, with nothing overlapping.
+   */
+  const enterAR = useCallback(async () => {
+    setSessionError(null);
+    try {
+      const session = await startSession("immersive-ar", sessionInit);
+      if (!session) return;
+      setInSession(true);
+      session.addEventListener(
+        "end",
+        () => {
+          setInSession(false);
+          setPlacement(createWorldPlacement());
+        },
+        { once: true },
+      );
+    } catch (error) {
+      setSessionError(
+        error instanceof Error ? error.message : "Couldn't start AR on this device.",
+      );
+    }
+  }, [sessionInit]);
+
+  const exitAR = useCallback(() => {
+    void stopSession();
+  }, []);
 
   /**
    * Voice resizing, matching the Bigger/Smaller buttons above.
@@ -107,66 +143,94 @@ export function ARWorldScreen({
         placeSignal={placeSignal}
       />
 
-      {/* Status line: says what the tracker is doing, so a blank screen never
-          looks like a crash. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-4">
-        <p className="rounded-pill bg-black/65 px-4 py-2 text-center text-[13px] font-medium text-white backdrop-blur">
-          {placement.placed
-            ? "Walk around it — it stays where you put it"
-            : hasSurface
-              ? "Tap to place your garden"
-              : "Point at the floor and move your phone slowly"}
+      {/* Zones, deliberately separated so nothing can overlap:
+          top-left status · top-right exit · bottom stack of controls. */}
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
+        <p className="max-w-[70%] rounded-pill bg-black/65 px-3.5 py-2 text-[12px] font-medium leading-snug text-white backdrop-blur">
+          {!inSession
+            ? "Start AR, then point at the floor"
+            : placement.placed
+              ? "Walk around it — it stays where you put it"
+              : hasSurface
+                ? "Tap to place your garden"
+                : "Point at the floor and move slowly"}
         </p>
+
+        {inSession ? (
+          <button
+            type="button"
+            onClick={exitAR}
+            className="pointer-events-auto shrink-0 rounded-pill bg-white/90 px-3.5 py-2 text-[12px] font-semibold text-forest shadow-card backdrop-blur"
+          >
+            Exit AR
+          </button>
+        ) : null}
       </div>
 
-      {/* Controls. `pointer-events-auto` on the buttons only, so taps on empty
-          space still reach WebXR as a select. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-3 p-4">
+      {/* Bottom stack. Each row is its own flex line, so a long row wraps
+          within itself instead of pushing into its neighbour. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-3">
         {selected ? (
-          <div className="pointer-events-auto mx-auto max-w-sm">
+          <div className="pointer-events-auto mx-auto w-full max-w-sm">
             <PlantDetailsPanel plant={selected} onClose={() => setSelected(null)} />
           </div>
         ) : null}
 
+        {inSession && placement.placed ? (
+          <ARGrowthSlider layout={layout} clockRef={clockRef} initialDay={seasonDay} />
+        ) : null}
+
         {/* Voice editing, once there is a garden on the floor to edit. Same
             pipeline as the planner and the preview view. */}
-        {placement.placed ? (
+        {inSession && placement.placed ? (
           <div className="pointer-events-none flex justify-center">
             <ARVoiceControl onScale={applyVoiceScale} />
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {/* Enters the session, and becomes the way out once inside. */}
-          <ARButton
-            sessionInit={sessionInit}
-            className="pointer-events-auto rounded-pill bg-forest px-6 py-3 text-sm font-semibold text-cream shadow-lift"
-          />
-
-          {!placement.placed ? (
+        {inSession && !placement.placed ? (
+          <div className="flex justify-center">
             <button
               type="button"
               disabled={!hasSurface}
               onClick={() => setPlaceSignal((value) => value + 1)}
-              className="pointer-events-auto rounded-pill bg-white px-6 py-3 text-sm font-semibold text-forest shadow-lift disabled:opacity-50"
+              className="pointer-events-auto rounded-pill bg-white px-7 py-3.5 text-sm font-semibold text-forest shadow-lift disabled:opacity-50"
             >
               Place garden
             </button>
-          ) : (
-            <>
-              <ControlButton onClick={() => rotate(-Math.PI / 8)}>Rotate ↺</ControlButton>
-              <ControlButton onClick={() => rotate(Math.PI / 8)}>Rotate ↻</ControlButton>
-              <ControlButton onClick={() => resize(1 / 1.25)}>Smaller</ControlButton>
-              <ControlButton onClick={() => resize(1.25)}>Bigger</ControlButton>
-              <ControlButton onClick={reset}>Move it</ControlButton>
-              <span className="pointer-events-none rounded-pill bg-black/65 px-3 py-2 text-[11px] font-medium text-white backdrop-blur">
-                {sizeLabel}
-              </span>
-            </>
-          )}
-        </div>
+          </div>
+        ) : null}
+
+        {inSession && placement.placed ? (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <ControlButton onClick={() => rotate(-Math.PI / 8)}>Rotate ↺</ControlButton>
+            <ControlButton onClick={() => rotate(Math.PI / 8)}>Rotate ↻</ControlButton>
+            <ControlButton onClick={() => resize(1 / 1.25)}>Smaller</ControlButton>
+            <ControlButton onClick={() => resize(1.25)}>Bigger</ControlButton>
+            <ControlButton onClick={reset}>Move it</ControlButton>
+            <span className="pointer-events-none rounded-pill bg-black/65 px-3 py-2 text-[11px] font-medium text-white backdrop-blur">
+              {sizeLabel}
+            </span>
+          </div>
+        ) : null}
       </div>
 
+      {/* Entry CTA, centred and alone until the session starts. */}
+      {!inSession ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
+          <button
+            type="button"
+            onClick={enterAR}
+            className="pointer-events-auto rounded-pill bg-forest px-8 py-4 text-sm font-semibold text-cream shadow-lift"
+          >
+            Start AR
+          </button>
+          {sessionError ? (
+            <p className="max-w-xs text-center text-xs text-white/80">{sessionError}</p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
