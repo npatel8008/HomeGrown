@@ -38,11 +38,28 @@ export interface SceneClock {
   timeOfDay: number;
 }
 
-/** How far along this crop is, 0-1, with a natural slow start and plateau. */
+/** Beyond this, a crop is a perennial rather than something sown each spring. */
+const PERENNIAL_DAYS = 365;
+/** How large a perennial is drawn the day it goes in the ground. */
+const ESTABLISHED_SCALE = 0.7;
+
+/**
+ * How far along this crop is, 0-1, with a natural slow start and plateau.
+ *
+ * Annuals are scaled against their own days-to-harvest, which is what the
+ * season scrubber is for. Perennials cannot be: an apple takes about three
+ * years to crop, so a 150-day season divided by 1,095 days drew every tree,
+ * berry bush and bramble in the library as an invisible twig. They are also
+ * not sown — you buy a two- or three-year-old plant and put it in the ground
+ * already established, so that is how they are drawn, and they fill out from
+ * there.
+ */
 export function growthFactor(daysToHarvest: number, day: number): number {
   const raw = clamp01(day / Math.max(1, daysToHarvest));
   // Crops keep filling out a little after first harvest, hence the 1.08 cap.
-  return Math.min(1.08, easeInOutCubic(raw) * 1.08);
+  const grown = Math.min(1.08, easeInOutCubic(raw) * 1.08);
+  if (daysToHarvest <= PERENNIAL_DAYS) return grown;
+  return Math.max(grown, ESTABLISHED_SCALE + raw * (1 - ESTABLISHED_SCALE));
 }
 
 /** Plot feet → scene units, and the origin moved to the plot's centre. */

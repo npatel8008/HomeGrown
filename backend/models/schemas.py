@@ -233,6 +233,8 @@ class PlacedPlant(BaseModel):
     id: str
     crop: str
     crop_id: str
+    #: 3D archetype from crops.json — which silhouette the scene draws.
+    model: str = "bush"
     x: float
     z: float
     height: float

@@ -37,7 +37,12 @@ PATH_WIDTH_FT = 1.0
 EPS = 0.001
 
 
-def _build_beds(width: float, length: float, garden_type: GardenType):
+def _build_beds(
+    width: float,
+    length: float,
+    garden_type: GardenType,
+    deepest_crop_ft: float = 0.0,
+):
     """Split the plot into bed strips separated by walking paths."""
     beds: List[LayoutBed] = []
     paths: List[LayoutPath] = []
@@ -46,9 +51,18 @@ def _build_beds(width: float, length: float, garden_type: GardenType):
     inner_l = max(0.5, length - 2 * MARGIN_FT)
     label = "Container group" if garden_type == GardenType.CONTAINERS else "Bed"
 
+    # A bed shallower than the crop's own spacing can never hold it, and the
+    # packer would drop every tree, cane and big shrub into `unplaced` with no
+    # explanation. Reachability is why beds are narrow, and it is an argument
+    # about salad: you need to reach the middle of a lettuce bed from the path,
+    # and you do not need to reach the middle of an apple tree. So the target
+    # depth grows to fit whatever is actually being planted.
+    target_depth = max(TARGET_BED_DEPTH_FT, deepest_crop_ft + 2 * MARGIN_FT)
+    reachable_depth = max(MAX_REACHABLE_DEPTH_FT, target_depth)
+
     bed_count = 1
-    if inner_l > MAX_REACHABLE_DEPTH_FT:
-        bed_count = max(2, int(math.ceil(inner_l / TARGET_BED_DEPTH_FT)))
+    if inner_l > reachable_depth:
+        bed_count = max(2, int(math.ceil(inner_l / target_depth)))
 
     path_total = (bed_count - 1) * PATH_WIDTH_FT
     # Never spend more than a third of the depth on paths.
@@ -57,6 +71,13 @@ def _build_beds(width: float, length: float, garden_type: GardenType):
         path_total = (bed_count - 1) * PATH_WIDTH_FT
 
     depth = (inner_l - path_total) / bed_count
+
+    # If the result still cannot hold the deepest crop, drop paths until it
+    # can: one usable bed beats four that fit nothing.
+    while bed_count > 1 and depth + EPS < deepest_crop_ft:
+        bed_count -= 1
+        path_total = (bed_count - 1) * PATH_WIDTH_FT
+        depth = (inner_l - path_total) / bed_count
     z = MARGIN_FT
     for index in range(bed_count):
         beds.append(
@@ -80,8 +101,14 @@ def _build_beds(width: float, length: float, garden_type: GardenType):
 
 
 def generate_layout(request: GenerateLayoutRequest) -> GenerateLayoutResponse:
+    requested = [get_crop(entry.crop_id) for entry in request.crops if entry.plants > 0]
+    deepest = max(
+        (crop["spacing_ft"] for crop in requested if crop),
+        default=0.0,
+    )
+
     beds, paths = _build_beds(
-        request.plot.width_ft, request.plot.length_ft, request.garden_type
+        request.plot.width_ft, request.plot.length_ft, request.garden_type, deepest
     )
 
     # crop -> plants still waiting for a home
@@ -139,6 +166,7 @@ def generate_layout(request: GenerateLayoutRequest) -> GenerateLayoutResponse:
                             days_to_harvest=crop["days_to_harvest"],
                             expected_yield_lbs=crop["estimated_yield_per_plant"],
                             water_requirement=crop["water_requirement"],
+                            model=crop.get("model", "bush"),
                             estimated_value_usd=round(
                                 crop["estimated_yield_per_plant"] * crop["estimated_grocery_price"], 2
                             ),

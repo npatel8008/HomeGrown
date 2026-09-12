@@ -198,6 +198,8 @@ export interface PlacedPlant {
   id: string;
   crop: string;
   crop_id: string;
+  /** Which 3D archetype to draw — see PlantModels' ARCHETYPES. */
+  model?: string;
   x: number;
   z: number;
   height: number;

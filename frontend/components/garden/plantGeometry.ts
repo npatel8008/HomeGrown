@@ -51,6 +51,10 @@ export const BROAD_LEAF = makeLeaf(0.54, 0.58, 0.5, 0.22);
 export const HERB_LEAF = makeLeaf(0.34, 0.55, 0.7, 0.15);
 /** Long and strappy, strongly cupped — spinach and lettuce rosettes. */
 export const ROSETTE_LEAF = makeLeaf(0.3, 0.5, 0.85, 0.3, 16);
+/** Long, narrow and strongly drooping — maize blades, leeks, garlic scapes. */
+export const BLADE_LEAF = makeLeaf(0.12, 0.22, 1.1, 0.55, 18);
+/** A thick upright rib — celery, rhubarb, chard petioles. */
+export const STALK_RIB = new THREE.CylinderGeometry(0.42, 0.7, 1, 6, 1);
 
 /** A stem that leans and curves, rather than a perfectly vertical rod. */
 export function makeStem(

@@ -20,6 +20,7 @@ import * as THREE from "three";
 import { jitterColor, plantVariation, type PlantVariation } from "@/lib/random";
 import type { PlacedPlant } from "@/lib/types";
 import {
+  BLADE_LEAF,
   BROAD_LEAF,
   BULB,
   CALYX,
@@ -27,6 +28,7 @@ import {
   FRUIT_SPHERE,
   HERB_LEAF,
   ROSETTE_LEAF,
+  STALK_RIB,
   TENDRIL,
   THIN_CYLINDER,
   makeStem,
@@ -556,7 +558,442 @@ const ClimberModel = forwardRef<THREE.Group, ModelProps>(function ClimberModel(
   );
 });
 
-type Archetype = "vine" | "bush" | "herb" | "rosette" | "spike" | "sprawl" | "root" | "climber";
+/**
+ * Every silhouette the garden can draw.
+ *
+ * Exported as a value so the backend's crop data can be checked against it:
+ * `crops.json` names one of these per crop, and a test asserts the two lists
+ * agree. That is what stops a new crop from quietly rendering as a bush.
+ */
+export const ARCHETYPES = [
+  "vine",
+  "bush",
+  "herb",
+  "rosette",
+  "spike",
+  "sprawl",
+  "root",
+  "climber",
+  "tree",
+  "shrub",
+  "cane",
+  "grass",
+  "mound",
+  "stalk",
+  "head",
+] as const;
+
+export type Archetype = (typeof ARCHETYPES)[number];
+
+function isArchetype(value: string | null | undefined): value is Archetype {
+  return typeof value === "string" && (ARCHETYPES as readonly string[]).includes(value);
+}
+
+/* ------------------------------------------------------------------ */
+/* Woody and structural archetypes                                     */
+/*                                                                     */
+/* The eight archetypes above cover annual vegetables. A 200-crop       */
+/* library also has to draw fruit trees, berry bushes, brambles, maize, */
+/* potatoes and celery, whose silhouettes share nothing with a lettuce. */
+/* Without these, every one of them fell through to `bush`.             */
+/* ------------------------------------------------------------------ */
+
+/** Dwarf fruit trees — apple, pear, peach, citrus, fig. */
+const TreeModel = forwardRef<THREE.Group, ModelProps>(function TreeModel(
+  { height, color, variation },
+  fruitRef,
+) {
+  const { random } = variation;
+  const leafColor = jitterColor(LEAF_DARK, variation.tint);
+  const canopyBase = height * 0.42;
+
+  const canopy = useMemo(() => {
+    const out: { position: [number, number, number]; scale: number }[] = [];
+    const count = 4 + Math.floor(random() * 3);
+    for (let index = 0; index < count; index += 1) {
+      const angle = index * 2.399;
+      const spread = height * 0.17 * (0.5 + random());
+      out.push({
+        position: [
+          Math.cos(angle) * spread,
+          canopyBase + height * (0.12 + random() * 0.38),
+          Math.sin(angle) * spread,
+        ],
+        scale: height * (0.15 + random() * 0.09),
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height]);
+
+  const fruit = useMemo(() => {
+    const out: [number, number, number][] = [];
+    const count = 5 + Math.floor(random() * 4);
+    for (let index = 0; index < count; index += 1) {
+      const angle = index * 2.399;
+      const spread = height * 0.16 * (0.6 + random() * 0.7);
+      out.push([
+        Math.cos(angle) * spread,
+        canopyBase + height * (0.1 + random() * 0.32),
+        Math.sin(angle) * spread,
+      ]);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height]);
+
+  return (
+    <group>
+      {/* trunk, tapering */}
+      <mesh position={[0, canopyBase * 0.5, 0]} castShadow>
+        <cylinderGeometry args={[height * 0.022, height * 0.038, canopyBase, 7]} />
+        <meshStandardMaterial color="#6E5236" roughness={1} />
+      </mesh>
+      {/* a couple of scaffold limbs, so the canopy has something to sit on */}
+      {[0.7, -0.7].map((direction, index) => (
+        <mesh
+          key={index}
+          position={[direction * height * 0.07, canopyBase * 0.92, index ? height * 0.05 : 0]}
+          rotation={[0, index * 1.6, direction * 0.6]}
+          castShadow
+        >
+          <cylinderGeometry args={[height * 0.011, height * 0.018, height * 0.24, 6]} />
+          <meshStandardMaterial color="#6E5236" roughness={1} />
+        </mesh>
+      ))}
+      {canopy.map((clump, index) => (
+        <mesh
+          key={index}
+          geometry={FOLIAGE_CLUMP}
+          position={clump.position}
+          scale={clump.scale}
+          castShadow
+        >
+          <meshStandardMaterial color={leafColor} roughness={0.9} flatShading />
+        </mesh>
+      ))}
+      <group ref={fruitRef}>
+        {fruit.map((position, index) => (
+          <Fruit key={index} size={height * 0.032} color={color} position={position} />
+        ))}
+      </group>
+    </group>
+  );
+});
+
+/** Woody berry bushes — blueberry, currant, gooseberry, honeyberry. */
+const ShrubModel = forwardRef<THREE.Group, ModelProps>(function ShrubModel(
+  { height, color, variation },
+  fruitRef,
+) {
+  const { random } = variation;
+  const leafColor = jitterColor(color, variation.tint);
+
+  const stems = useMemo(() => {
+    const out: { bend: number; twist: number; angle: number }[] = [];
+    const count = 5 + Math.floor(random() * 4);
+    for (let index = 0; index < count; index += 1) {
+      out.push({
+        bend: 0.1 + random() * 0.16,
+        twist: (random() - 0.5) * 0.3,
+        angle: index * 2.399,
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height]);
+
+  return (
+    <group>
+      {stems.map((stem, index) => (
+        <group key={index} rotation={[0, stem.angle, 0]}>
+          <mesh geometry={makeStem(height * 0.9, height * 0.012, stem.bend, stem.twist)} castShadow>
+            <meshStandardMaterial color="#7A6242" roughness={1} />
+          </mesh>
+          <StemLeaves
+            count={5}
+            height={height * 0.9}
+            size={height * 0.13}
+            geometry={HERB_LEAF}
+            color={leafColor}
+            startAt={0.3}
+            droop={0.5}
+          />
+        </group>
+      ))}
+      {/* berries hang in small clusters rather than singly */}
+      <group ref={fruitRef}>
+        {stems.slice(0, 4).map((stem, index) => (
+          <group key={index} rotation={[0, stem.angle, 0]} position={[stem.bend * 0.6, height * 0.62, 0]}>
+            {[0, 1, 2].map((berry) => (
+              <mesh
+                key={berry}
+                geometry={FRUIT_SPHERE}
+                position={[berry * height * 0.035 - height * 0.035, -berry * height * 0.03, 0]}
+                scale={height * 0.035}
+                castShadow
+              >
+                <meshStandardMaterial color={color} roughness={0.3} />
+              </mesh>
+            ))}
+          </group>
+        ))}
+      </group>
+    </group>
+  );
+});
+
+/** Brambles — raspberry, blackberry, tayberry. Tall arching canes. */
+const CaneModel = forwardRef<THREE.Group, ModelProps>(function CaneModel(
+  { height, color, variation },
+  fruitRef,
+) {
+  const { random } = variation;
+  const leafColor = jitterColor(color, variation.tint);
+
+  const canes = useMemo(() => {
+    const out: { bend: number; angle: number; height: number }[] = [];
+    const count = 3 + Math.floor(random() * 3);
+    for (let index = 0; index < count; index += 1) {
+      out.push({
+        // Pronounced arch: that curve is what reads as a bramble.
+        bend: 0.35 + random() * 0.3,
+        angle: index * 2.399,
+        height: height * (0.82 + random() * 0.18),
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height]);
+
+  return (
+    <group>
+      {canes.map((cane, index) => (
+        <group key={index} rotation={[0, cane.angle, 0]}>
+          <mesh geometry={makeStem(cane.height, height * 0.011, cane.bend, 0.1)} castShadow>
+            <meshStandardMaterial color="#6F7A4B" roughness={1} />
+          </mesh>
+          <StemLeaves
+            count={7}
+            height={cane.height}
+            size={height * 0.12}
+            geometry={HERB_LEAF}
+            color={leafColor}
+            startAt={0.22}
+            droop={0.65}
+          />
+          <group ref={index === 0 ? fruitRef : undefined}>
+            {[0.55, 0.75, 0.92].map((t, berry) => (
+              <mesh
+                key={berry}
+                geometry={FRUIT_SPHERE}
+                position={[cane.bend * t * 0.85, cane.height * t, 0]}
+                scale={height * 0.036}
+                castShadow
+              >
+                <meshStandardMaterial color={color} roughness={0.42} flatShading />
+              </mesh>
+            ))}
+          </group>
+        </group>
+      ))}
+    </group>
+  );
+});
+
+/** Cereals and maize — one thick stalk, drooping blades, a tassel on top. */
+const GrassModel = forwardRef<THREE.Group, ModelProps>(function GrassModel(
+  { height, color, variation },
+  fruitRef,
+) {
+  const leafColor = jitterColor(STEM_GREEN, variation.tint);
+
+  return (
+    <group>
+      <mesh position={[0, height * 0.5, 0]} castShadow>
+        <cylinderGeometry args={[height * 0.016, height * 0.026, height, 7]} />
+        <meshStandardMaterial color={leafColor} roughness={0.95} />
+      </mesh>
+      <StemLeaves
+        count={8 + variation.extraLeaves}
+        height={height}
+        size={height * 0.42}
+        geometry={BLADE_LEAF}
+        color={leafColor}
+        startAt={0.12}
+        droop={0.95}
+      />
+      {/* tassel */}
+      <mesh position={[0, height * 1.02, 0]}>
+        <coneGeometry args={[height * 0.03, height * 0.16, 5]} />
+        <meshStandardMaterial color="#C4A85E" roughness={1} />
+      </mesh>
+      {/* the ears, which is what you actually harvest */}
+      <group ref={fruitRef}>
+        {[0.45, 0.6].map((t, index) => (
+          <mesh
+            key={index}
+            position={[index ? -height * 0.05 : height * 0.05, height * t, 0]}
+            rotation={[0, 0, index ? 0.3 : -0.3]}
+            castShadow
+          >
+            <capsuleGeometry args={[height * 0.035, height * 0.16, 4, 8]} />
+            <meshStandardMaterial color={color} roughness={0.6} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+});
+
+/** Tubers — potato, sweet potato. A leafy mound; the crop is underground. */
+const MoundModel = forwardRef<THREE.Group, ModelProps>(function MoundModel(
+  { height, color, variation },
+  fruitRef,
+) {
+  const { random } = variation;
+  const leafColor = jitterColor(color, variation.tint);
+
+  const clumps = useMemo(() => {
+    const out: { position: [number, number, number]; scale: number }[] = [];
+    const count = 6 + Math.floor(random() * 4);
+    for (let index = 0; index < count; index += 1) {
+      const angle = index * 2.399;
+      const spread = height * 0.32 * random();
+      out.push({
+        position: [Math.cos(angle) * spread, height * (0.25 + random() * 0.45), Math.sin(angle) * spread],
+        scale: height * (0.2 + random() * 0.12),
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height]);
+
+  return (
+    <group>
+      {/* hilled soil, which is how potatoes are actually grown */}
+      <mesh position={[0, height * 0.05, 0]} receiveShadow>
+        <sphereGeometry args={[height * 0.42, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#5A4632" roughness={1} />
+      </mesh>
+      {clumps.map((clump, index) => (
+        <mesh key={index} geometry={FOLIAGE_CLUMP} position={clump.position} scale={clump.scale} castShadow>
+          <meshStandardMaterial color={leafColor} roughness={0.92} flatShading />
+        </mesh>
+      ))}
+      {/* flowers, the only above-ground sign the crop is maturing */}
+      <group ref={fruitRef}>
+        {clumps.slice(0, 3).map((clump, index) => (
+          <mesh
+            key={index}
+            geometry={FRUIT_SPHERE}
+            position={[clump.position[0], clump.position[1] + height * 0.2, clump.position[2]]}
+            scale={height * 0.03}
+          >
+            <meshStandardMaterial color="#E8E2F0" roughness={0.7} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+});
+
+/** Upright ribbed stalks — celery, rhubarb, leek, asparagus, lemongrass. */
+const StalkModel = forwardRef<THREE.Group, ModelProps>(function StalkModel(
+  { height, color, variation },
+  fruitRef,
+) {
+  const { random } = variation;
+  const leafColor = jitterColor(LEAF_DARK, variation.tint);
+
+  const ribs = useMemo(() => {
+    const out: { angle: number; lean: number; height: number }[] = [];
+    const count = 6 + Math.floor(random() * 4);
+    for (let index = 0; index < count; index += 1) {
+      out.push({
+        angle: index * 2.399,
+        lean: 0.06 + random() * 0.12,
+        height: height * (0.72 + random() * 0.28),
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height]);
+
+  return (
+    <group>
+      {ribs.map((rib, index) => (
+        <group key={index} rotation={[0, rib.angle, 0]}>
+          <group rotation={[rib.lean, 0, 0]}>
+            <mesh
+              geometry={STALK_RIB}
+              position={[0, rib.height * 0.5, 0]}
+              scale={[height * 0.055, rib.height, height * 0.04]}
+              castShadow
+            >
+              <meshStandardMaterial color={color} roughness={0.85} />
+            </mesh>
+            {/* leafy top */}
+            <mesh
+              geometry={ROSETTE_LEAF}
+              position={[0, rib.height, 0]}
+              rotation={[-0.5, 0, 0]}
+              scale={height * 0.26}
+              castShadow
+            >
+              <meshStandardMaterial color={leafColor} roughness={0.85} side={THREE.DoubleSide} />
+            </mesh>
+          </group>
+        </group>
+      ))}
+      <group ref={fruitRef} />
+    </group>
+  );
+});
+
+/** Tight heads — cabbage, cauliflower, romanesco, kohlrabi. */
+const HeadModel = forwardRef<THREE.Group, ModelProps>(function HeadModel(
+  { height, color, variation },
+  fruitRef,
+) {
+  const { random } = variation;
+  const wrapColor = jitterColor(LEAF_DARK, variation.tint);
+
+  const wrappers = useMemo(() => {
+    const out: { angle: number; tilt: number }[] = [];
+    const count = 7 + Math.floor(random() * 3);
+    for (let index = 0; index < count; index += 1) {
+      out.push({ angle: index * 2.399, tilt: 1.1 + random() * 0.35 });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [height]);
+
+  return (
+    <group>
+      {/* outer leaves, splayed wide and low */}
+      {wrappers.map((wrapper, index) => (
+        <group key={index} rotation={[0, wrapper.angle, 0]}>
+          <mesh
+            geometry={ROSETTE_LEAF}
+            position={[height * 0.3, height * 0.12, 0]}
+            rotation={[-wrapper.tilt, 0, -0.5]}
+            scale={height * 0.7}
+            castShadow
+          >
+            <meshStandardMaterial color={wrapColor} roughness={0.85} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      ))}
+      {/* the head itself, slightly squashed */}
+      <group ref={fruitRef}>
+        <mesh geometry={FRUIT_SPHERE} position={[0, height * 0.36, 0]} scale={[height * 0.42, height * 0.36, height * 0.42]} castShadow>
+          <meshStandardMaterial color={color} roughness={0.78} flatShading />
+        </mesh>
+      </group>
+    </group>
+  );
+});
 
 const MODEL_BY_CROP: Record<string, Archetype> = {
   tomato: "vine",
@@ -593,33 +1030,50 @@ const MODEL_BY_CROP: Record<string, Archetype> = {
  * season (fruit, pods, a flower spike). The scene scales it from 0 as the crop
  * approaches its harvest date.
  */
+/**
+ * Archetype -> component. A `Record` over the union rather than a `switch`,
+ * so adding an archetype without a model is a compile error instead of a
+ * silent fall-through to `bush`.
+ */
+const MODELS: Record<Archetype, React.ForwardRefExoticComponent<
+  ModelProps & React.RefAttributes<THREE.Group>
+>> = {
+  vine: VineModel,
+  bush: BushModel,
+  herb: HerbModel,
+  rosette: RosetteModel,
+  spike: SpikeModel,
+  sprawl: SprawlModel,
+  root: RootModel,
+  climber: ClimberModel,
+  tree: TreeModel,
+  shrub: ShrubModel,
+  cane: CaneModel,
+  grass: GrassModel,
+  mound: MoundModel,
+  stalk: StalkModel,
+  head: HeadModel,
+};
+
+/**
+ * `fruitRef` receives the group holding whatever should emerge late in the
+ * season (fruit, pods, a head, a flower spike). The scene scales it from 0 as
+ * the crop approaches its harvest date.
+ *
+ * The archetype comes from the layout data, which carries it through from
+ * `crops.json`. The local map is only a fallback for the original ten crops,
+ * so an older cached layout still renders correctly.
+ */
 export const PlantModel = forwardRef<THREE.Group, { plant: PlacedPlant }>(function PlantModel(
   { plant },
   fruitRef,
 ) {
   const variation = useMemo(() => plantVariation(plant.id), [plant.id]);
-  const kind = MODEL_BY_CROP[plant.crop_id] ?? "bush";
+  const kind: Archetype = isArchetype(plant.model)
+    ? plant.model
+    : MODEL_BY_CROP[plant.crop_id] ?? "bush";
   const height = Math.max(0.4, plant.height);
-  const props = { height, color: plant.color, variation };
+  const Model = MODELS[kind];
 
-  switch (kind) {
-    case "vine":
-      return <VineModel ref={fruitRef} {...props} />;
-    case "herb":
-      return <HerbModel ref={fruitRef} {...props} />;
-    case "rosette":
-      return <RosetteModel ref={fruitRef} {...props} />;
-    case "spike":
-      return <SpikeModel ref={fruitRef} {...props} />;
-    case "sprawl":
-      return <SprawlModel ref={fruitRef} {...props} />;
-    case "root":
-      return <RootModel ref={fruitRef} {...props} />;
-    case "climber":
-      return <ClimberModel ref={fruitRef} {...props} />;
-    default:
-      return <BushModel ref={fruitRef} {...props} />;
-  }
+  return <Model ref={fruitRef} height={height} color={plant.color} variation={variation} />;
 });
-
-
