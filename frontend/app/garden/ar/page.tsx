@@ -6,7 +6,7 @@ import { loginHref } from "@/lib/auth-user";
 import { getSessionUser, isAuth0Configured } from "@/lib/auth0";
 
 export const metadata: Metadata = {
-  title: "AR garden — GardenAI",
+  title: "AR garden — HomeGrown",
 };
 
 // Full-bleed camera view: let it use the whole screen on a notched phone, and

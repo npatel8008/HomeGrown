@@ -1,4 +1,4 @@
-"""GardenAI backend — FastAPI application entrypoint.
+"""HomeGrown backend — FastAPI application entrypoint.
 
 Every endpoint is a thin route that delegates to one of the four independent
 services in `services/`:
@@ -39,7 +39,7 @@ from services import auth, elevenlabs_stt, llm_client, user_store  # noqa: E402
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
 app = FastAPI(
-    title="GardenAI API",
+    title="HomeGrown API",
     version="0.1.0",
     description="Scaffold API for personalized household food gardening. All "
     "intelligence is currently mocked — see services/ for the swap points.",

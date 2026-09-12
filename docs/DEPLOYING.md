@@ -1,4 +1,4 @@
-# Deploying GardenAI
+# Deploying HomeGrown
 
 Two hosts, on purpose:
 

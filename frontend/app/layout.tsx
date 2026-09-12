@@ -10,7 +10,7 @@ import { GardenStoreProvider } from "@/lib/store";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "GardenAI — Grow what you actually eat",
+  title: "HomeGrown — Grow what you actually eat",
   description:
     "Turn your household's food habits, available space, and local growing conditions into a personalized garden plan.",
 };

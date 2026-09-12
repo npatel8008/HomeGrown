@@ -1,4 +1,4 @@
-# Running GardenAI on a phone
+# Running HomeGrown on a phone
 
 A phone will not grant camera, motion or geolocation to a page served over plain
 `http`, so `http://<your-laptop-ip>:3000` is a dead end for anything beyond

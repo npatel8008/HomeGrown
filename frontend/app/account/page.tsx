@@ -21,7 +21,7 @@ export default async function AccountPage() {
     <div className="section pt-10">
       <PageHeader
         eyebrow="Account"
-        title="Your GardenAI account"
+        title="Your HomeGrown account"
         description="You're signed in with Auth0. Your garden plan and care record are saved to your account."
       />
 

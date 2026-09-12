@@ -42,6 +42,9 @@ AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "").strip().replace("https://", "").rst
 AUTH0_API_AUDIENCE = os.getenv("AUTH0_API_AUDIENCE", "").strip()
 INTERNAL_API_SECRET = os.getenv("INTERNAL_API_SECRET", "").strip()
 
+# Not branding: these must match frontend/lib/backend-token.ts exactly, and a
+# deploy where only one side has changed rejects every token. Renaming them is
+# a coordinated deploy, not a find-and-replace.
 INTERNAL_ISSUER = "gardenai-frontend"
 INTERNAL_AUDIENCE = "gardenai-backend"
 

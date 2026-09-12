@@ -36,6 +36,8 @@ import type {
   ResolvedLocation,
 } from "./types";
 
+// Not branding: renaming this orphans every browser's saved state, since the
+// old key would no longer be read.
 const STORAGE_PREFIX = "gardenai.demo.v1";
 
 /**

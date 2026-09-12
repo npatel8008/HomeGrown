@@ -53,7 +53,7 @@ export function AppNav({
             <LeafIcon className="h-5 w-5" />
           </span>
           <span className="font-display text-lg font-semibold tracking-tight text-forest whitespace-nowrap">
-            GardenAI
+            HomeGrown
           </span>
         </Link>
 

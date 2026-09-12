@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * GardenAI design tokens — a light, warm, agricultural palette.
+ * HomeGrown design tokens — a light, warm, agricultural palette.
  * Deliberately not a dashboard theme: cream paper, deep forest ink,
  * sage surfaces and a little terracotta for warmth.
  */

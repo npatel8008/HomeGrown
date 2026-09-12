@@ -59,9 +59,8 @@ export function HomegrownCoverageCard({ summary }: { summary: GardenSummary }) {
             </div>
           </dl>
           <p className="mt-5 text-[11px] leading-relaxed text-cream/50">
-            Demo estimate. Based on placeholder yield and retail-price data in
-            <code className="mx-1 rounded bg-cream/10 px-1 py-0.5">backend/data/crops.json</code>
-            and an assumed 7 lbs of produce per person per week.
+            Estimate only. Based on typical yields and retail produce prices, and an assumed
+            7 lbs of produce per person per week.
           </p>
         </div>
       </div>

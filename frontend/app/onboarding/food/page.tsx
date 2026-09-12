@@ -77,10 +77,8 @@ export default function FoodOnboardingPage() {
               onChange={(event) => update({ freeText: event.target.value })}
             />
             <p className="mt-2 text-xs text-ink-faint">
-              Free text is read by the ingredient-extraction service. With an{" "}
-              <code className="rounded bg-cream-deep px-1 py-0.5">IFM_API_KEY</code> set that&apos;s
-              K2; without one it falls back to a built-in keyword matcher.
-            </p>
+              Describe a normal week in your own words. We pull out the ingredients your
+              household goes through most, and rank them by how often they turn up.</p>
           </section>
 
           <section className="border-t border-line pt-7">

@@ -92,12 +92,9 @@ export default function Garden3DPage() {
               initialDay={DEMO_SEASON_DAY}
             />
             <p className="text-xs leading-relaxed text-ink-faint">
-              Plants are procedural geometry sized from each crop&apos;s mature height, with a
-              per-plant seed so no two are identical. Growth is driven by each crop&apos;s{" "}
-              <code className="rounded bg-cream-deep px-1 py-0.5">days_to_harvest</code>. Positions,
-              spacing and bed geometry come from{" "}
-              <code className="rounded bg-cream-deep px-1 py-0.5">POST /api/generate-layout</code> —
-              the same response the 2D planner draws.
+              Plants are sized from each crop&apos;s mature height, with a per-plant seed so no
+              two are identical, and grow against its real days-to-harvest. This view and the 2D
+              planner read the same plan, so positions and spacing always agree.
             </p>
           </div>
 

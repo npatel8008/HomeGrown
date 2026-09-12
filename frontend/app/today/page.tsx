@@ -262,14 +262,11 @@ export default function TodayPage() {
           ) : null}
 
           <p className="rounded-card border border-line bg-white/70 px-5 py-4 text-xs leading-relaxed text-ink-muted">
-            <span className="font-semibold text-forest">Where the intelligence goes: </span>
-            once a season is started, progress comes from{" "}
-            <code className="rounded bg-cream-deep px-1 py-0.5">backend/services/growth_schedule.py</code>{" "}
-            using your real planting date and the live forecast; the horticultural rules still
-            live in{" "}
-            <code className="rounded bg-cream-deep px-1 py-0.5">care_engine.py</code>. Watering
-            intervals are a lookup table nudged by temperature and rain; a soil-moisture
-            balance from evapotranspiration is the natural next step.
+            <span className="font-semibold text-forest">About these estimates: </span>
+            once a season is started, progress is measured from your planting date against each
+            crop&apos;s typical days-to-harvest, and watering intervals adjust for temperature and
+            rainfall in your forecast. They are guides, not soil-moisture readings — trust the top
+            inch of soil over the number.
           </p>
         </div>
       </div>

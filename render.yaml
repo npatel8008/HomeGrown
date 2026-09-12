@@ -1,4 +1,11 @@
-# Render Blueprint for the GardenAI FastAPI backend.
+# Render Blueprint for the HomeGrown FastAPI backend.
+#
+# NOTE the identifiers below still read `gardenai`, deliberately. They are not
+# branding, they are live bindings:
+#   - `name:` is the deployed service, and the URL Vercel's BACKEND_ORIGIN
+#     points at. Renaming it creates a second, empty service.
+#   - `MONGODB_DB` is the database holding every saved garden. Renaming it
+#     points at a new, empty one.
 #
 # The frontend stays on Vercel. Only this backend lives here, because it needs
 # a *persistent* process: the AI endpoints run 7-15s (too long for most

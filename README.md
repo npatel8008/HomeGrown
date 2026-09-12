@@ -1,8 +1,8 @@
-# GardenAI
+# HomeGrown
 
 **Grow what you actually eat.**
 
-GardenAI turns a household's food habits, available space, and local growing
+HomeGrown turns a household's food habits, available space, and local growing
 conditions into a personalized garden plan: which crops to grow, how many of
 each, why, what they'll yield, what they'll save, where to plant them, and what
 to do in the garden today.
