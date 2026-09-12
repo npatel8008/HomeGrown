@@ -99,3 +99,26 @@ URL must be in the Auth0 application's Allowed Callback URLs, Logout URLs and
 Web Origins, with `APP_BASE_URL` matching — see docs/TESTING_TODO.md item 7.
 
 Pinch to resize the garden, or say "make it bigger" / "life size".
+
+
+## Which phone for the AR view
+
+The AR route has two modes, chosen automatically by feature detection.
+
+**World-tracked AR (the real thing)** needs WebXR `immersive-ar`, which in
+practice means **Chrome on an Android device with ARCore**. You get plane
+detection, a placement reticle, tap-to-place, world anchoring and 6DOF
+tracking: place the garden on the floor and walk around it while it stays put.
+
+**Preview mode** is everything else, including **Safari on iOS** — Apple has
+never shipped WebXR `immersive-ar`. The preview composites the garden over the
+camera feed and tracks the phone's *rotation* only, so looking around works but
+walking does not move you relative to the garden. The UI says so rather than
+letting you discover it by walking.
+
+Both modes need HTTPS, so the tunnel above is required either way; WebXR will
+not start on plain `http://`.
+
+If you need true AR on an iPhone the options are AR Quick Look (which needs a
+USDZ export and takes over the screen with Apple's own UI) or a commercial SLAM
+SDK such as 8th Wall. Neither is wired up here.
