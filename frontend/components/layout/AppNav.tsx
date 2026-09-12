@@ -12,14 +12,19 @@ import { LOGOUT_HREF, loginHref } from "@/lib/auth-user";
 import { cx } from "@/lib/format";
 import { useGardenStore } from "@/lib/store";
 
+/**
+ * `label` is the compact form used in the top bar, which has to fit six links
+ * plus a CTA and the account menu. `longLabel` is the unambiguous version used
+ * in the mobile sheet, where there is room.
+ */
 const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/profile", label: "My Food Profile" },
-  { href: "/recommendations", label: "Recommendations" },
-  { href: "/garden", label: "Garden Plan" },
-  { href: "/garden/3d", label: "3D Garden" },
-  { href: "/garden/ar", label: "AR" },
-  { href: "/today", label: "Today" },
+  { href: "/", label: "Home", longLabel: "Home" },
+  { href: "/profile", label: "Food Profile", longLabel: "My Food Profile" },
+  { href: "/recommendations", label: "Crops", longLabel: "Crop Recommendations" },
+  { href: "/garden", label: "Garden Plan", longLabel: "Garden Plan" },
+  { href: "/garden/3d", label: "3D", longLabel: "3D Garden" },
+  { href: "/garden/ar", label: "AR", longLabel: "AR Garden" },
+  { href: "/today", label: "Today", longLabel: "Today" },
 ];
 
 export function AppNav({
@@ -38,23 +43,27 @@ export function AppNav({
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-cream/85 backdrop-blur-md">
-      <nav className="section flex h-16 items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+      <nav className="section flex h-16 items-center justify-between gap-4">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2.5"
+          onClick={() => setOpen(false)}
+        >
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest text-cream">
             <LeafIcon className="h-5 w-5" />
           </span>
-          <span className="font-display text-lg font-semibold tracking-tight text-forest">
+          <span className="font-display text-lg font-semibold tracking-tight text-forest whitespace-nowrap">
             GardenAI
           </span>
         </Link>
 
-        <ul className="hidden items-center gap-1 lg:flex">
+        <ul className="hidden items-center gap-0.5 xl:flex">
           {LINKS.slice(1).map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
                 className={cx(
-                  "rounded-pill px-3.5 py-2 text-sm font-medium transition-colors",
+                  "block whitespace-nowrap rounded-pill px-3 py-2 text-sm font-medium transition-colors",
                   isActive(link.href)
                     ? "bg-sage text-forest"
                     : "text-ink-muted hover:bg-sage-tint hover:text-forest",
@@ -66,12 +75,12 @@ export function AppNav({
           ))}
         </ul>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Link
             href={progress.recommendations ? "/recommendations" : "/onboarding/food"}
-            className="btn-primary hidden !py-2.5 !text-[13px] sm:inline-flex"
+            className="btn-primary hidden whitespace-nowrap !py-2.5 !text-[13px] sm:inline-flex"
           >
-            {progress.recommendations ? "My garden plan" : "Build my garden"}
+            {progress.recommendations ? "My garden" : "Build my garden"}
           </Link>
           {authEnabled ? (
             user ? (
@@ -87,7 +96,7 @@ export function AppNav({
             onClick={() => setOpen((value) => !value)}
             aria-label="Toggle navigation"
             aria-expanded={open}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-white text-forest lg:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-forest xl:hidden"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
               <path
@@ -102,7 +111,7 @@ export function AppNav({
       </nav>
 
       {open ? (
-        <div className="border-t border-line bg-cream lg:hidden">
+        <div className="border-t border-line bg-cream xl:hidden">
           <ul className="section flex flex-col py-3">
             {LINKS.map((link) => (
               <li key={link.href}>
@@ -114,7 +123,7 @@ export function AppNav({
                     isActive(link.href) ? "bg-sage text-forest" : "text-ink-muted",
                   )}
                 >
-                  {link.label}
+                  {link.longLabel}
                 </Link>
               </li>
             ))}

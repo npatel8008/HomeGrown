@@ -39,7 +39,7 @@ export function UserMenu({ user }: { user: AuthUser }) {
         className="flex items-center gap-2 rounded-pill border border-line bg-white py-1 pl-1 pr-3 text-sm font-medium text-forest transition-colors hover:border-moss/50 hover:bg-sage-tint"
       >
         <UserAvatar user={user} size="sm" />
-        <span className="hidden max-w-[9rem] truncate sm:inline">{name}</span>
+        <span className="hidden max-w-[7rem] truncate whitespace-nowrap lg:inline">{name}</span>
       </button>
 
       {open ? (
