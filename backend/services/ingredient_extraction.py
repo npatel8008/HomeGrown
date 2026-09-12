@@ -185,35 +185,71 @@ def _extract_with_keywords(request: AnalyzeFoodRequest) -> List[ExtractedIngredi
 
 _CROP_LIBRARY = [(crop["id"], crop["name"]) for crop in all_crops()]
 
-# Kept deliberately terse. K2-Think's deliberation length scales with prompt
-# complexity, and a long rule list made it burn its whole token budget on
-# reasoning and return nothing. Short prompt = ~5s and a clean answer.
-SYSTEM_PROMPT = """Extract the produce a household eats, mapped to a crop library.
+
+def _normalise(name: str) -> str:
+    """Fold a written ingredient name towards its library form.
+
+    The model writes English, not identifiers: "Green Onions", "bell peppers",
+    "Tomatoes". Matching has to survive case, plurals and punctuation, or a
+    perfectly good answer is recorded as un-growable.
+    """
+    text = re.sub(r"[^a-z0-9 ]+", " ", name.strip().lower())
+    text = re.sub(r"\s+", " ", text).strip()
+    if text.endswith("ies") and len(text) > 4:
+        text = text[:-3] + "y"
+    elif text.endswith("oes"):
+        # tomatoes, potatoes, mangoes — the generic rule gives "tomatoe".
+        text = text[:-2]
+    elif text.endswith("es") and text[:-2].endswith(("sh", "ch", "s", "x", "z")):
+        text = text[:-2]
+    elif text.endswith("s") and not text.endswith("ss"):
+        text = text[:-1]
+    return text
+
+
+#: Every spelling we will accept for a crop, built once.
+_BY_NAME: Dict[str, str] = {}
+for _crop in all_crops():
+    for _form in (_crop["name"], _crop["id"].replace("-", " ")):
+        _BY_NAME.setdefault(_normalise(_form), _crop["id"])
+
+# The model is asked for ingredient NAMES only — no crop ids, and no crop list.
+#
+# Sending the library inline used to work at ten crops. At 245 the list alone
+# is ~2,700 characters, and K2-Think spends its entire completion budget
+# reasoning over it and returns nothing: measured 0/2 at 16k tokens and still
+# 0/2 at 32k, falling back to the keyword matcher on ordinary input. Raising
+# the budget does not help, because the problem is how much there is to think
+# about, not how much room there is to think in.
+#
+# Naming ingredients is a language problem and belongs to the model. Deciding
+# which of 245 crops a name corresponds to is a lookup, and belongs to us.
+SYSTEM_PROMPT = """Extract the produce a household eats.
 
 Reply with ONLY this JSON, nothing else:
-{"ingredients":[{"ingredient":"Tomato","weekly_usage_score":100,"crop_id":"tomato","matched_meals":["Tacos"]}]}
+{"ingredients":[{"ingredient":"Tomato","weekly_usage_score":100,"matched_meals":["Tacos"]}]}
 
-- crop_id: one of the given ids, or null if not in the library.
+- Use the common singular name of the plant: "Tomato", "Bell Pepper", "Banana".
 - weekly_usage_score: 0-100, relative to each other; the top one is 100.
 - Weight by how often the meal is eaten and how central the ingredient is.
 - Don't count the same habit twice if the meal list and the notes both mention it.
-- 6-12 rows, most-used first, produce only. No meat, dairy, grains or pantry staples.
+- Produce only — no meat, dairy, grains or pantry staples.
+- Be thorough. List every produce item the meals plausibly use, including the
+  ones a recipe takes for granted — usually 6-12 across a week of cooking.
+  A single dish on its own may legitimately yield just one.
 Answer immediately. Do not deliberate."""
 
 
 def _build_user_prompt(request: AnalyzeFoodRequest) -> str:
-    library = ", ".join(crop_id for crop_id, _ in _CROP_LIBRARY)
     meals = (
         ", ".join("%s %gx/wk" % (meal.name, meal.times_per_week) for meal in request.meals)
         or "(none listed)"
     )
     return (
-        "Library: %s\n"
         "Household: %d people\n"
         "Meals: %s\n"
         "Notes: %s"
         % (
-            library,
             request.household_size,
             meals,
             request.free_text.strip() or "(none)",
@@ -236,14 +272,12 @@ def _coerce_ingredient(row: object) -> Optional[ExtractedIngredient]:
         return None
     score = max(0, min(100, score))
 
-    # Trust our own library over whatever the model said about growability.
-    crop_id = row.get("crop_id")
-    crop_id = str(crop_id).strip() if crop_id else ""
+    # The library decides what is growable, not the model. It is asked only for
+    # names now, but an id is still honoured if an older prompt supplied one.
     known = {cid: cname for cid, cname in _CROP_LIBRARY}
+    crop_id = str(row.get("crop_id") or "").strip()
     if crop_id not in known:
-        # The model may have given a good name but a bad/absent id.
-        by_name = {cname.lower(): cid for cid, cname in _CROP_LIBRARY}
-        crop_id = by_name.get(name.lower(), "")
+        crop_id = _BY_NAME.get(_normalise(name), "")
 
     meals = row.get("matched_meals")
     if isinstance(meals, list):
@@ -294,9 +328,18 @@ def _extract_with_llm(request: AnalyzeFoodRequest) -> Optional[List[ExtractedIng
         seen.add(key)
         results.append(item)
 
-    if len(results) < 3:
-        logger.warning("LLM returned only %d usable ingredients", len(results))
+    # Fall back only when there is nothing usable at all.
+    #
+    # This used to demand three or more, from when the library was ten crops
+    # and the expected input was a week of meals. "Banana cake" legitimately
+    # yields one ingredient, and the old threshold threw that correct answer
+    # away in favour of a keyword matcher that returns nothing for it — an
+    # empty profile in place of a right one.
+    if not results:
+        logger.warning("LLM returned no usable ingredients")
         return None
+    if len(results) < 3:
+        logger.info("LLM returned %d ingredient(s) — short input, keeping it", len(results))
 
     results.sort(key=lambda item: -item.weekly_usage_score)
 

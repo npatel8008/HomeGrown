@@ -46,6 +46,10 @@ TIMEOUT_SECONDS = float(os.getenv("IFM_TIMEOUT", "25"))
 # K2-Think keeps its chain-of-thought out of `content` but still bills it to
 # the completion budget — 4k-9k tokens is normal for a small extraction. The
 # server default (8192) truncates mid-answer, so ask for real headroom.
+#
+# Raising this is not a fix for a prompt that is too big to reason about:
+# measured against a 245-crop list, 32768 burned the lot just as 16384 did.
+# Keep the prompt small instead (see ingredient_extraction).
 DEFAULT_MAX_TOKENS = int(os.getenv("IFM_MAX_TOKENS", "16384"))
 
 
