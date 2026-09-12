@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { generateLayout } from "@/lib/api";
+import { generateLayout, recommendCrops } from "@/lib/api";
 import { layoutCropsFor } from "@/lib/garden-commands";
 import { summarizeSelection } from "@/lib/selection";
 import { useGardenStore } from "@/lib/store";
@@ -54,6 +54,35 @@ export default function RecommendationsPage() {
       selectedCropIds: on && data ? data.recommendations.map((crop) => crop.crop_id) : [],
       layout: null,
     });
+
+  /**
+   * Re-run the recommendation against the live backend.
+   *
+   * The stored flag only describes how the *saved* numbers were produced, so
+   * a plan built while the backend was down keeps saying so until something
+   * re-fetches. This is that something — one click, rather than walking back
+   * through the food and space steps.
+   */
+  const refetchLive = async () => {
+    setBusy(true);
+    setNotice(undefined);
+    const result = await recommendCrops({
+      household_size: state.householdSize,
+      ingredients: state.ingredients,
+      space: state.space,
+    });
+    update({
+      recommendations: result.data,
+      location: result.data.location ?? state.location,
+      climate: result.data.climate ?? state.climate,
+      selectedCropIds: result.data.recommendations.map((crop) => crop.crop_id),
+      recommendationsOffline: result.usedFallback,
+      layout: null,
+      layoutOffline: false,
+    });
+    setBusy(false);
+    if (result.usedFallback) setNotice(result.error);
+  };
 
   const buildLayout = async () => {
     if (!data) return;
@@ -128,7 +157,19 @@ export default function RecommendationsPage() {
       ) : null}
       {state.recommendationsOffline && !notice ? (
         <div className="mt-6">
-          <OfflineNotice message="These numbers came from the bundled demo dataset, not your backend. Regenerate from your growing space to use live data." />
+          <OfflineNotice
+            message="These numbers came from the bundled demo dataset, not your backend."
+            action={
+              <button
+                type="button"
+                className="btn-secondary !py-2 !text-xs"
+                onClick={refetchLive}
+                disabled={busy}
+              >
+                {busy ? "Fetching…" : "Retry with live data"}
+              </button>
+            }
+          />
         </div>
       ) : null}
 
