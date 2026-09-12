@@ -28,11 +28,33 @@ import type { GenerateLayoutResponse, PlacedPlant } from "@/lib/types";
 import { GardenSceneContent, type SceneClock } from "@/components/garden/GardenScene";
 import type { OrientationSample } from "./useDeviceOrientation";
 
-export type ArScale = "tabletop" | "life-size";
-
 const FEET_TO_METRES = 0.3048;
 /** Roughly where a phone is held, in metres above the floor. */
 const EYE_HEIGHT_M = 1.5;
+
+/**
+ * How big the garden is drawn, as a fraction of life-size.
+ *
+ * Continuous rather than a couple of presets: a fixed "tabletop" size is wrong
+ * in most rooms, and the natural way to fix that on a phone is to pinch. 1 is
+ * true scale — a 12ft plot really 12ft across.
+ */
+export const LIFE_SIZE = 1;
+export const MIN_SIZE = 0.02;
+export const MAX_SIZE = 1.6;
+/** Small enough to sit on a floor in a normal room, which is where this gets demoed. */
+export const DEFAULT_SIZE = 0.08;
+
+export function clampSize(size: number): number {
+  return Math.max(MIN_SIZE, Math.min(MAX_SIZE, size));
+}
+
+/** "1:12" / "Life-size" — what to show while pinching. */
+export function describeSize(size: number): string {
+  if (size >= 0.95 && size <= 1.05) return "Life-size";
+  const ratio = Math.round(1 / size);
+  return `1:${ratio}`;
+}
 
 export interface Placement {
   /** Where the garden's centre sits, in metres, world space. */
@@ -46,8 +68,9 @@ export function createPlacement(): Placement {
   return { position: new THREE.Vector3(0, -EYE_HEIGHT_M, -1.2), yaw: 0, placed: false };
 }
 
-export function scaleFactor(scale: ArScale): number {
-  return scale === "life-size" ? FEET_TO_METRES : FEET_TO_METRES / 12;
+/** Scene units are feet; the group scale converts to metres at the chosen size. */
+export function scaleFactor(size: number): number {
+  return FEET_TO_METRES * clampSize(size);
 }
 
 /* ------------------------------------------------------------------ */
@@ -116,7 +139,7 @@ export function ARGardenView({
   dragRef,
   cameraQuaternion,
   useSensors,
-  scale,
+  size,
   placement,
 }: {
   layout: GenerateLayoutResponse;
@@ -127,11 +150,12 @@ export function ARGardenView({
   dragRef: MutableRefObject<{ yaw: number; pitch: number }>;
   cameraQuaternion: MutableRefObject<THREE.Quaternion>;
   useSensors: boolean;
-  scale: ArScale;
+  /** Fraction of life-size; see DEFAULT_SIZE. */
+  size: number;
   placement: Placement;
 }) {
   const reducedMotion = usePrefersReducedMotion();
-  const factor = useMemo(() => scaleFactor(scale), [scale]);
+  const factor = useMemo(() => scaleFactor(size), [size]);
 
   return (
     <Canvas
@@ -180,23 +204,21 @@ export function ARGardenView({
 export function placementInFront(
   cameraQuaternion: THREE.Quaternion,
   layout: GenerateLayoutResponse,
-  scale: ArScale,
+  size: number,
 ): Placement {
   const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(cameraQuaternion);
   forward.y = 0;
   if (forward.lengthSq() < 1e-6) forward.set(0, 0, -1);
   forward.normalize();
 
-  const plotDepthM = layout.plot.length_ft * scaleFactor(scale);
-  const distance =
-    scale === "life-size"
-      ? // Far enough back that the whole plot is in shot.
-        Math.max(3, plotDepthM * 0.75)
-      : 1.1;
-  const drop = scale === "life-size" ? EYE_HEIGHT_M : 0.55;
+  // Stand far enough back that the whole plot is in shot, whatever size it is.
+  const plotDepthM = layout.plot.length_ft * scaleFactor(size);
+  const distance = Math.max(0.9, plotDepthM * 0.75);
 
   const position = forward.clone().multiplyScalar(distance);
-  position.y = -drop;
+  // Always on the floor. A model resting on the ground reads as real; one
+  // floating at table height only works if there is actually a table there.
+  position.y = -EYE_HEIGHT_M;
 
   return {
     position,

@@ -95,7 +95,10 @@ planner — voice changes the *inputs*, it never invents plant positions, so a
 spoken edit produces exactly what clicking the same change would.
 
 The same control is in the AR view, so you can change the garden while looking
-at it through the camera — confirmations appear as captions, never spoken.
+at it through the camera — confirmations appear as captions, never spoken. In
+AR the garden is also resized by pinching, or by saying *"make it bigger"*,
+*"make it smaller"* or *"make it life size"*; those commands change how it is
+drawn and never touch what is planted.
 
 Parsing is deterministic keyword/number matching and needs no API key; K2 is
 consulted only for phrasings the rules miss. Commands naming a crop that is not

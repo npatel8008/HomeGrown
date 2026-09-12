@@ -469,6 +469,8 @@ class VoiceCommandKind(str, Enum):
     SET_CROP_COUNT = "set_crop_count"
     ADJUST_CROP_COUNT = "adjust_crop_count"
     SCALE_CROP_COUNT = "scale_crop_count"
+    SCALE_GARDEN = "scale_garden"
+    SET_GARDEN_SCALE = "set_garden_scale"
     CLEAR_CROPS = "clear_crops"
     SELECT_ALL_CROPS = "select_all_crops"
     UNDO = "undo"
@@ -483,6 +485,8 @@ class GardenCommand(BaseModel):
     plants: Optional[int] = None
     delta: Optional[int] = None
     factor: Optional[float] = None
+    #: set_garden_scale only. 100 = life-size.
+    percent: Optional[float] = None
 
 
 class TranscribeResponse(BaseModel):

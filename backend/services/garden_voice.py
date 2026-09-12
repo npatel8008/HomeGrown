@@ -49,6 +49,23 @@ CLEAR_WORDS = ("clear everything", "start over", "remove everything", "clear the
 ALL_WORDS = ("everything", "all the crops", "select all", "add everything")
 UNDO_WORDS = ("undo", "revert", "never mind", "nevermind", "go back", "put it back")
 
+# Resizing the AR view. These describe the *garden as an object in the room*,
+# not how much of a crop to plant, which is why they are matched before crop
+# names and only when no crop was named — "more tomatoes" is a planting change,
+# "make it bigger" is a view change.
+BIGGER_WORDS = ("bigger", "larger", "enlarge", "scale it up", "scale up", "blow it up", "zoom in", "grow it")
+SMALLER_WORDS = ("smaller", "shrink", "scale it down", "scale down", "zoom out", "tiny", "miniature")
+LIFE_SIZE_WORDS = ("life size", "life-size", "full size", "full-size", "actual size", "real size", "full scale", "real scale")
+MUCH_BIGGER = ("twice", "double the size", "way bigger", "much bigger", "a lot bigger")
+MUCH_SMALLER = ("half the size", "way smaller", "much smaller", "a lot smaller")
+SLIGHTLY = ("bit", "slightly", "little", "touch")
+
+#: One "make it bigger" step. Chosen so a couple of them are obvious but it
+#: still takes a few to go from a model to life-size.
+SCALE_STEP = 1.5
+#: Percentage of life-size that reads as a model sitting on the floor.
+MODEL_SCALE_PCT = 8.0
+
 
 def _crop_lookup() -> List[Tuple[str, str, str]]:
     """(crop_id, display name, matchable phrase) with plurals and synonyms."""
@@ -128,9 +145,30 @@ def _contains(text: str, needles) -> bool:
 _INSTRUCTION_VERBS = (
     "add|remove|delete|plant|drop|get rid|include|put|give|grow|throw in|"
     "double|halve|increase|reduce|scale|set|up the|cut back|cut the|skip|lose|take out|"
-    "more|less|fewer|extra|boost|i want|i don't want|i do not want|i hate|no more|without"
+    "more|less|fewer|extra|boost|i want|i don't want|i do not want|i hate|no more|without|"
+    # Resize verbs, so "add basil and make it bigger" is two instructions.
+    "make|show|zoom|shrink|enlarge|blow"
 )
 _AND_BEFORE_VERB = re.compile(r"\band\b(?=\s*(?:%s)\b)" % _INSTRUCTION_VERBS)
+
+
+def _scale_command(clause: str) -> Optional[Dict[str, Any]]:
+    """A change to how big the garden is drawn, or None if this is not one."""
+    if _contains(clause, LIFE_SIZE_WORDS):
+        return {"kind": "set_garden_scale", "percent": 100.0}
+    if _contains(clause, MUCH_BIGGER):
+        return {"kind": "scale_garden", "factor": 2.0}
+    if _contains(clause, MUCH_SMALLER):
+        return {"kind": "scale_garden", "factor": 0.5}
+    if _contains(clause, ("miniature", "tiny")):
+        return {"kind": "set_garden_scale", "percent": MODEL_SCALE_PCT}
+    if _contains(clause, BIGGER_WORDS):
+        factor = 1.2 if _contains(clause, SLIGHTLY) else SCALE_STEP
+        return {"kind": "scale_garden", "factor": factor}
+    if _contains(clause, SMALLER_WORDS):
+        factor = 1 / 1.2 if _contains(clause, SLIGHTLY) else 1 / SCALE_STEP
+        return {"kind": "scale_garden", "factor": factor}
+    return None
 
 
 def _split_clauses(transcript: str) -> List[str]:
@@ -163,6 +201,16 @@ def _parse_with_rules(transcript: str) -> List[Dict[str, Any]]:
             continue
 
         found = _find_crops(clause)
+
+        # "make it bigger" resizes the view; "more tomatoes" plants more. The
+        # difference is whether a crop was named, so this only fires when none
+        # was.
+        if not found:
+            resize = _scale_command(clause)
+            if resize:
+                commands.append(resize)
+                continue
+
         if not found and _contains(clause, ALL_WORDS) and _contains(clause, ADD_WORDS):
             commands.append({"kind": "select_all_crops"})
             continue
@@ -210,8 +258,11 @@ _LLM_SYSTEM = (
     "You convert a gardener's spoken request into JSON edits to their garden. "
     "Reply with only: {\"commands\":[...]}. Allowed command kinds: add_crop, "
     "remove_crop, set_crop_count, adjust_crop_count, scale_crop_count, "
-    "clear_crops, select_all_crops, undo. Every command except clear_crops, "
-    "select_all_crops and undo needs a crop_id from the allowed list. "
+    "scale_garden, set_garden_scale, clear_crops, select_all_crops, undo. "
+    "scale_garden takes factor and set_garden_scale takes percent (100 = "
+    "life-size); both resize how the garden is drawn in AR and take no crop. "
+    "Every other command except clear_crops, select_all_crops and undo needs a "
+    "crop_id from the allowed list. "
     "set_crop_count takes plants, adjust_crop_count takes delta (may be "
     "negative), scale_crop_count takes factor. Use only listed crop_ids."
 )
@@ -251,6 +302,20 @@ def _validate(commands: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         kind = command.get("kind")
         if kind in ("clear_crops", "select_all_crops", "undo"):
             clean.append({"kind": kind})
+            continue
+
+        if kind == "scale_garden":
+            factor = command.get("factor")
+            if not isinstance(factor, (int, float)) or factor <= 0:
+                continue
+            clean.append({"kind": kind, "factor": max(0.2, min(5.0, float(factor)))})
+            continue
+
+        if kind == "set_garden_scale":
+            percent = command.get("percent")
+            if not isinstance(percent, (int, float)) or percent <= 0:
+                continue
+            clean.append({"kind": kind, "percent": max(1.0, min(200.0, float(percent)))})
             continue
 
         crop_id = command.get("crop_id")
@@ -301,6 +366,11 @@ def describe(command: Dict[str, Any]) -> str:
         return "Cleared the garden"
     if kind == "select_all_crops":
         return "Added every recommended crop"
+    if kind == "scale_garden":
+        return "Made it bigger" if command["factor"] >= 1 else "Made it smaller"
+    if kind == "set_garden_scale":
+        percent = command["percent"]
+        return "Set it to life-size" if percent >= 100 else "Shrank it to a model"
     if kind == "undo":
         return "Undid the last change"
     return kind

@@ -97,3 +97,5 @@ drag-to-look. Both paths say what is missing.
 **Auth0 callback URLs**: the AR route is behind sign-in, so the current tunnel
 URL must be in the Auth0 application's Allowed Callback URLs, Logout URLs and
 Web Origins, with `APP_BASE_URL` matching — see docs/TESTING_TODO.md item 7.
+
+Pinch to resize the garden, or say "make it bigger" / "life size".

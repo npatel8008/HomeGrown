@@ -120,8 +120,13 @@ browser. Nothing below has run on real hardware.
   how far the garden creeps; "Move here" is the escape hatch.
 - **Does it hold still?** The real test: place it, walk around it, turn away and
   back. It should stay where you put it.
+- **Pinch to resize.** Two fingers on a real touchscreen, which is the one
+  gesture that cannot be simulated honestly on a desktop. Confirm pinching does
+  not also swing the view, that it survives lifting one finger before the other,
+  and that the size readout keeps up.
 - **Life-size scale.** Needs a few metres of room — confirm a 12x8 ft plot reads
-  as believably person-sized outdoors, not toy-sized or enormous.
+  as believably person-sized outdoors, not toy-sized or enormous. Scaling up
+  leaves you standing inside it by design; "Move here" is the way out.
 - **Thermals and battery.** Camera plus WebGL is the hottest thing this app
   does. Run it for five minutes and watch for throttling.
 - **Landscape rotation** mid-session, and backgrounding the app and returning —

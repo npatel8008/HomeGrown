@@ -34,6 +34,21 @@ import {
 
 export type VoicePhase = "idle" | "listening" | "thinking" | "planting";
 
+/** "make it bigger" changes how the garden is drawn, not what is planted. */
+export interface ScaleChange {
+  factor?: number | null;
+  percent?: number | null;
+}
+
+export interface VoiceGardenOptions {
+  /**
+   * Handles resize commands, returning the line to show. Only the AR view can
+   * honour these; without a handler they are reported as such rather than
+   * silently ignored.
+   */
+  onScale?: (change: ScaleChange) => string | null;
+}
+
 /** Which recogniser this session will use. */
 type Engine = "unknown" | "elevenlabs" | "browser" | "none";
 
@@ -47,7 +62,7 @@ const MAX_RECORDING_MS = 20000;
 const MIN_AUDIO_BYTES = 900;
 const UNDO_DEPTH = 10;
 
-export function useVoiceGarden() {
+export function useVoiceGarden({ onScale }: VoiceGardenOptions = {}) {
   const { state, update } = useGardenStore();
   const [phase, setPhase] = useState<VoicePhase>("idle");
   const [transcript, setTranscript] = useState("");
@@ -134,6 +149,31 @@ export function useVoiceGarden() {
         return;
       }
 
+      // Resize commands never reach the layout — they change the view. Split
+      // them out first so "add basil and make it bigger" does both.
+      const resizes = result.commands.filter(
+        (command) => command.kind === "scale_garden" || command.kind === "set_garden_scale",
+      );
+      const gardenCommands = result.commands.filter(
+        (command) => command.kind !== "scale_garden" && command.kind !== "set_garden_scale",
+      );
+
+      const resizeLines: string[] = [];
+      for (const command of resizes) {
+        if (!onScale) {
+          setProblem("Resizing only works in the AR view.");
+          continue;
+        }
+        const line = onScale({ factor: command.factor, percent: command.percent });
+        if (line) resizeLines.push(line);
+      }
+
+      if (gardenCommands.length === 0) {
+        if (resizeLines.length > 0) setLog((lines) => [...resizeLines, ...lines].slice(0, 8));
+        setPhase("idle");
+        return;
+      }
+
       const current: GardenSelection = {
         selectedCropIds: state.selectedCropIds,
         plantCounts: state.plantCounts,
@@ -141,7 +181,7 @@ export function useVoiceGarden() {
 
       // Undo lives here rather than in the reducer: only this hook knows what
       // the garden looked like before.
-      if (result.commands.some((command) => command.kind === "undo")) {
+      if (gardenCommands.some((command) => command.kind === "undo")) {
         const previous = history.current.shift();
         if (!previous) {
           setPhase("idle");
@@ -155,10 +195,11 @@ export function useVoiceGarden() {
         return;
       }
 
-      const applied = applyCommands(result.commands, current, state.recommendations);
+      const applied = applyCommands(gardenCommands, current, state.recommendations);
       if (applied.applied.length === 0) {
+        if (resizeLines.length > 0) setLog((lines) => [...resizeLines, ...lines].slice(0, 8));
         setPhase("idle");
-        setProblem(applied.skipped[0] ?? "Nothing changed.");
+        if (resizeLines.length === 0) setProblem(applied.skipped[0] ?? "Nothing changed.");
         return;
       }
 
@@ -168,11 +209,11 @@ export function useVoiceGarden() {
         selectedCropIds: applied.selectedCropIds,
         plantCounts: applied.plantCounts,
       });
-      setLog((lines) => [...applied.applied, ...lines].slice(0, 8));
+      setLog((lines) => [...resizeLines, ...applied.applied, ...lines].slice(0, 8));
       if (applied.skipped.length > 0) setProblem(applied.skipped[0]);
       setPhase("idle");
     },
-    [regenerate, state.plantCounts, state.recommendations, state.selectedCropIds],
+    [onScale, regenerate, state.plantCounts, state.recommendations, state.selectedCropIds],
   );
 
   /* ---------------- recording ---------------- */

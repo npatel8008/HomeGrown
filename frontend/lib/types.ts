@@ -405,6 +405,8 @@ export type VoiceCommandKind =
   | "set_crop_count"
   | "adjust_crop_count"
   | "scale_crop_count"
+  | "scale_garden"
+  | "set_garden_scale"
   | "clear_crops"
   | "select_all_crops"
   | "undo";
@@ -416,6 +418,8 @@ export interface GardenCommand {
   plants?: number | null;
   delta?: number | null;
   factor?: number | null;
+  /** set_garden_scale only. 100 = life-size. */
+  percent?: number | null;
 }
 
 export interface TranscribeResponse {

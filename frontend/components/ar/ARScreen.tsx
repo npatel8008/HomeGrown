@@ -24,9 +24,11 @@ import type { SceneClock } from "@/components/garden/GardenScene";
 import { ArrowRightIcon, LeafIcon } from "@/components/ui/Icons";
 import {
   ARGardenView,
+  clampSize,
   createPlacement,
+  describeSize,
+  DEFAULT_SIZE,
   placementInFront,
-  type ArScale,
   type Placement,
 } from "./ARGardenView";
 import { ARVoiceControl } from "./ARVoiceControl";
@@ -49,7 +51,10 @@ export function ARScreen({
   const orientation = useDeviceOrientation();
 
   const [started, setStarted] = useState(false);
-  const [scale, setScale] = useState<ArScale>("tabletop");
+  // Fraction of life-size. Pinch or voice changes it; there are no presets,
+  // because the right size depends entirely on the room you are standing in.
+  const [size, setSize] = useState(DEFAULT_SIZE);
+  const [sizeHint, setSizeHint] = useState<string | null>(null);
   const [placement, setPlacement] = useState<Placement>(createPlacement);
   const [selected, setSelected] = useState<PlacedPlant | null>(null);
 
@@ -57,6 +62,10 @@ export function ARScreen({
   const cameraQuaternion = useRef(new THREE.Quaternion());
   const dragRef = useRef({ yaw: 0, pitch: 0 });
   const dragging = useRef<{ x: number; y: number } | null>(null);
+  const sizeHintTimer = useRef<ReturnType<typeof setTimeout>>();
+  /** Live touch points, so two fingers can be told from one. */
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ distance: number; size: number } | null>(null);
 
   const sensorsWorking = orientation.state === "granted";
   const cameraLive = camera.state === "live";
@@ -79,28 +88,88 @@ export function ARScreen({
 
   const place = useCallback(() => {
     if (!layout) return;
-    setPlacement(placementInFront(cameraQuaternion.current, layout, scale));
-  }, [layout, scale]);
+    setPlacement(placementInFront(cameraQuaternion.current, layout, size));
+  }, [layout, size]);
 
-  const changeScale = useCallback(
-    (next: ArScale) => {
-      setScale(next);
-      // Re-drop at the new scale, otherwise a life-size garden appears
-      // swallowing the viewer.
-      if (layout && placement.placed) {
-        setPlacement(placementInFront(cameraQuaternion.current, layout, next));
-      }
+  /** Shows the size briefly, so pinching has a readout without permanent chrome. */
+  const flashSize = useCallback((next: number) => {
+    setSizeHint(describeSize(next));
+    clearTimeout(sizeHintTimer.current);
+    sizeHintTimer.current = setTimeout(() => setSizeHint(null), 1400);
+  }, []);
+
+  const resize = useCallback(
+    (updater: (current: number) => number) => {
+      setSize((current) => {
+        const next = clampSize(updater(current));
+        flashSize(next);
+        return next;
+      });
     },
-    [layout, placement.placed],
+    [flashSize],
+  );
+
+  /** Voice: "make it bigger", "life size". Returns the line to show. */
+  const applyVoiceScale = useCallback(
+    (change: { factor?: number | null; percent?: number | null }) => {
+      if (typeof change.percent === "number") {
+        const target = change.percent / 100;
+        resize(() => target);
+        return `Now ${describeSize(clampSize(target))}`;
+      }
+      if (typeof change.factor === "number") {
+        const factor = change.factor;
+        let shown = "";
+        setSize((current) => {
+          const next = clampSize(current * factor);
+          shown = describeSize(next);
+          flashSize(next);
+          return next;
+        });
+        return factor >= 1 ? "Bigger" : "Smaller";
+      }
+      return null;
+    },
+    [flashSize, resize],
   );
 
   /* ---- drag-to-look, when the sensors are not available ---- */
 
+  const spread = (): number => {
+    const [a, b] = Array.from(pointers.current.values());
+    if (!a || !b) return 0;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
   const onPointerDown = (event: React.PointerEvent) => {
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (pointers.current.size === 2) {
+      // Second finger down: start pinching, and abandon any look-drag so the
+      // view does not lurch while resizing.
+      pinch.current = { distance: spread(), size };
+      dragging.current = null;
+      return;
+    }
     if (sensorsWorking) return;
     dragging.current = { x: event.clientX, y: event.clientY };
   };
+
   const onPointerMove = (event: React.PointerEvent) => {
+    if (pointers.current.has(event.pointerId)) {
+      pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+
+    if (pinch.current && pointers.current.size >= 2) {
+      const distance = spread();
+      if (distance > 0 && pinch.current.distance > 0) {
+        const next = clampSize(pinch.current.size * (distance / pinch.current.distance));
+        setSize(next);
+        flashSize(next);
+      }
+      return;
+    }
+
     if (!dragging.current) return;
     const dx = event.clientX - dragging.current.x;
     const dy = event.clientY - dragging.current.y;
@@ -111,8 +180,17 @@ export function ARScreen({
       Math.min(MAX_PITCH, dragRef.current.pitch - dy * DRAG_SPEED),
     );
   };
-  const endDrag = () => {
+
+  const endDrag = (event?: React.PointerEvent) => {
+    if (event) pointers.current.delete(event.pointerId);
+    if (pointers.current.size < 2) pinch.current = null;
     dragging.current = null;
+  };
+
+  /** Trackpad and mouse wheel resize too — this is how it gets developed. */
+  const onWheel = (event: React.WheelEvent) => {
+    if (!placement.placed) return;
+    resize((current) => current * (event.deltaY > 0 ? 0.92 : 1.08));
   };
 
   /* ---- nothing to show ---- */
@@ -209,6 +287,8 @@ export function ARScreen({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onPointerLeave={endDrag}
+      onWheel={onWheel}
     >
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
@@ -228,7 +308,7 @@ export function ARScreen({
         dragRef={dragRef}
         cameraQuaternion={cameraQuaternion}
         useSensors={sensorsWorking}
-        scale={scale}
+        size={size}
         placement={placement}
       />
 
@@ -276,7 +356,7 @@ export function ARScreen({
 
       {/* bottom controls */}
       <div className="absolute inset-x-0 bottom-0 space-y-3 p-4 pb-6">
-        {placement.placed ? <ARVoiceControl /> : null}
+        {placement.placed ? <ARVoiceControl onScale={applyVoiceScale} /> : null}
 
         {!placement.placed ? (
           <p className="mx-auto w-fit rounded-pill bg-black/55 px-4 py-2 text-xs text-white backdrop-blur">
@@ -285,21 +365,15 @@ export function ARScreen({
         ) : null}
 
         <div className="flex items-center justify-center gap-2">
-          <div className="flex rounded-pill bg-black/55 p-1 backdrop-blur">
-            {(["tabletop", "life-size"] as ArScale[]).map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => changeScale(option)}
-                className={
-                  "rounded-pill px-3.5 py-2 text-xs font-semibold transition-colors " +
-                  (scale === option ? "bg-white text-forest" : "text-white/80")
-                }
-              >
-                {option === "tabletop" ? "Tabletop" : "Life-size"}
-              </button>
-            ))}
-          </div>
+          {sizeHint ? (
+            <span className="rounded-pill bg-black/60 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur">
+              {sizeHint}
+            </span>
+          ) : placement.placed ? (
+            <span className="rounded-pill bg-black/45 px-3.5 py-2 text-[11px] text-white/85 backdrop-blur">
+              Pinch to resize
+            </span>
+          ) : null}
 
           <button
             type="button"

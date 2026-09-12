@@ -21,13 +21,18 @@
 import { useEffect, useRef, useState } from "react";
 
 import { cx } from "@/lib/format";
-import { useVoiceGarden } from "@/lib/use-voice-garden";
+import { useVoiceGarden, type ScaleChange } from "@/lib/use-voice-garden";
 
 /** How long a confirmation stays up before the view is handed back. */
 const CAPTION_MS = 4000;
 
-export function ARVoiceControl() {
-  const voice = useVoiceGarden();
+export function ARVoiceControl({
+  onScale,
+}: {
+  /** Lets "make it bigger" resize the view rather than the planting. */
+  onScale: (change: ScaleChange) => string | null;
+}) {
+  const voice = useVoiceGarden({ onScale });
   const [caption, setCaption] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
 

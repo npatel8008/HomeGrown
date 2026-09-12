@@ -188,3 +188,76 @@ def test_a_plain_list_of_crops_still_is_not_split():
     result = parse_request("add basil and mint")
     assert {command["crop_id"] for command in result["commands"]} == {"basil", "mint"}
     assert all(command["kind"] == "add_crop" for command in result["commands"])
+
+
+# ---------------------------------------------------------------------------
+# Resizing the AR view
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "said",
+    ["make it bigger", "bigger please", "enlarge it", "scale it up", "zoom in a bit"],
+)
+def test_making_the_garden_bigger(said):
+    command = first(said)
+    assert command["kind"] == "scale_garden"
+    assert command["factor"] > 1
+
+
+@pytest.mark.parametrize("said", ["make it smaller", "shrink it", "scale it down", "zoom out"])
+def test_making_the_garden_smaller(said):
+    command = first(said)
+    assert command["kind"] == "scale_garden"
+    assert command["factor"] < 1
+
+
+@pytest.mark.parametrize("said", ["make it life size", "show it at full size", "actual size please"])
+def test_life_size(said):
+    command = first(said)
+    assert command["kind"] == "set_garden_scale"
+    assert command["percent"] == 100
+
+
+def test_twice_as_big():
+    assert first("make it twice as big")["factor"] == 2.0
+
+
+def test_half_the_size():
+    assert first("make it half the size")["factor"] == 0.5
+
+
+def test_a_bit_bigger_is_a_smaller_step_than_bigger():
+    gentle = first("make it a bit bigger")["factor"]
+    normal = first("make it bigger")["factor"]
+    assert 1 < gentle < normal
+
+
+def test_shrink_to_a_model():
+    command = first("make it tiny")
+    assert command["kind"] == "set_garden_scale"
+    assert command["percent"] < 100
+
+
+def test_resizing_does_not_hijack_crop_amounts():
+    """"more tomatoes" plants more; only a crop-less phrase resizes the view."""
+    command = first("more tomatoes")
+    assert command["kind"] == "adjust_crop_count"
+    assert command["crop_id"] == "tomato"
+
+
+def test_a_resize_and_a_planting_change_together():
+    result = parse_request("add basil and make it bigger")
+    kinds_seen = [command["kind"] for command in result["commands"]]
+    assert "add_crop" in kinds_seen
+    assert "scale_garden" in kinds_seen
+
+
+def test_scale_factors_are_clamped():
+    """A model that returns something wild must not turn the garden inside out."""
+    from services.garden_voice import _validate
+
+    assert _validate([{"kind": "scale_garden", "factor": 500}])[0]["factor"] <= 5.0
+    assert _validate([{"kind": "scale_garden", "factor": 0.0001}])[0]["factor"] >= 0.2
+    assert _validate([{"kind": "scale_garden", "factor": -2}]) == []
+    assert _validate([{"kind": "set_garden_scale", "percent": 9999}])[0]["percent"] <= 200
