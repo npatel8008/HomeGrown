@@ -39,6 +39,16 @@ const API_TARGET_LABEL = API_BASE_URL || "this app's own origin (proxied to the 
 // instantly with a connection error, so this doesn't delay the offline path.
 const REQUEST_TIMEOUT_MS = 60000;
 
+/** An HTTP error *from* the backend, as opposed to not reaching it at all. */
+class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly detail: string,
+  ) {
+    super(`${status}: ${detail}`);
+  }
+}
+
 export interface ApiResult<T> {
   data: T;
   usedFallback: boolean;
@@ -56,10 +66,39 @@ async function request<T>(path: string, init: RequestInit, offline: T): Promise<
       cache: "no-store",
     });
     if (!response.ok) {
-      throw new Error(`${response.status} ${response.statusText}`);
+      // FastAPI puts validation failures in `detail` as [{loc, msg}]. Throwing
+      // away that body turns an actionable "plot.width_ft must be > 0" into a
+      // bare "(422 )", which is how this cost an afternoon once already.
+      const body = await response.text();
+      let detail = body.slice(0, 300);
+      try {
+        const parsed = JSON.parse(body);
+        if (Array.isArray(parsed?.detail)) {
+          detail = parsed.detail
+            .map((item: { loc?: unknown[]; msg?: string }) =>
+              `${(item.loc ?? []).filter((part) => part !== "body").join(".")}: ${item.msg}`,
+            )
+            .join("; ");
+        } else if (typeof parsed?.detail === "string") {
+          detail = parsed.detail;
+        }
+      } catch {
+        // Not JSON — the truncated text is the best we have.
+      }
+      throw new ApiError(response.status, detail);
     }
     return { data: (await response.json()) as T, usedFallback: false };
   } catch (error) {
+    // Reaching the backend and being rejected by it are different failures,
+    // and saying "unreachable" for the second one sends you hunting the wrong
+    // problem.
+    if (error instanceof ApiError) {
+      return {
+        data: offline,
+        usedFallback: true,
+        error: `The backend rejected this request (${error.status}): ${error.detail} — showing bundled demo data.`,
+      };
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return {
       data: offline,
@@ -110,11 +149,49 @@ export function analyzeFood(body: AnalyzeFoodRequest) {
   );
 }
 
+/**
+ * Bring a request into the range the backend's schema accepts.
+ *
+ * The UI can legitimately hold values the API rejects: clearing a number input
+ * gives `Number("") === 0`, and a plot width of 0 is a 422. Editing the store
+ * on every keystroke to prevent that fights the user mid-type, so the payload
+ * is normalised here instead — one place, every caller covered.
+ */
+function sanitizeRecommendRequest(body: RecommendCropsRequest): RecommendCropsRequest {
+  const clamp = (value: number, low: number, high: number, fallbackValue: number) =>
+    Number.isFinite(value) && value > 0 ? Math.min(high, Math.max(low, value)) : fallbackValue;
+
+  return {
+    household_size: Math.round(clamp(body.household_size, 1, 20, 1)),
+    ingredients: (body.ingredients ?? []).map((item) => ({
+      ...item,
+      // The schema wants an integer 0-100; sliders and rescaling can produce
+      // fractions, and `growable` must never be undefined.
+      weekly_usage_score: Math.max(0, Math.min(100, Math.round(item.weekly_usage_score ?? 0))),
+      growable: Boolean(item.growable),
+      crop_id: item.crop_id ?? null,
+      matched_meals: item.matched_meals ?? [],
+    })),
+    space: {
+      ...body.space,
+      plot: {
+        ...body.space.plot,
+        width_ft: clamp(body.space.plot?.width_ft, 1, 200, 12),
+        length_ft: clamp(body.space.plot?.length_ft, 1, 200, 8),
+        unit: body.space.plot?.unit || "ft",
+      },
+      budget_usd: Number.isFinite(body.space.budget_usd)
+        ? Math.max(0, body.space.budget_usd)
+        : 150,
+    },
+  };
+}
+
 /** SYSTEM 2 — crop recommendation / scoring. */
 export function recommendCrops(body: RecommendCropsRequest) {
   return request<RecommendCropsResponse>(
     "/api/recommend-crops",
-    { method: "POST", body: JSON.stringify(body) },
+    { method: "POST", body: JSON.stringify(sanitizeRecommendRequest(body)) },
     fallback.recommendCrops as RecommendCropsResponse,
   );
 }
