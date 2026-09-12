@@ -10,13 +10,15 @@
  */
 
 import { ARButton } from "@react-three/xr";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 import { usePrefersReducedMotion } from "@/lib/motion";
 import type { SceneClock } from "@/components/garden/Garden3D";
 import type { GenerateLayoutResponse, PlacedPlant } from "@/lib/types";
 import { PlantDetailsPanel } from "@/components/garden/PlantDetailsPanel";
+import type { ScaleChange } from "@/lib/use-voice-garden";
+import { ARVoiceControl } from "./ARVoiceControl";
 import { ARWorldCanvas, createWorldPlacement, type WorldPlacement } from "./ARWorldView";
 import { arSessionInit } from "./useARSupport";
 
@@ -62,6 +64,34 @@ export function ARWorldScreen({
 
   const sizeLabel = size >= 0.99 ? "Life size" : `1:${Math.round(1 / size)}`;
 
+  /**
+   * Voice resizing, matching the Bigger/Smaller buttons above.
+   *
+   * Clamped the same way, so "make it life size" tops out at true scale rather
+   * than growing past it — in world-tracked AR, larger than life-size is not a
+   * bigger garden, it is a wrong one.
+   */
+  const applyVoiceScale = useCallback((change: ScaleChange): string | null => {
+    if (typeof change.percent === "number") {
+      const target = THREE.MathUtils.clamp(change.percent / 100, MIN_SIZE, MAX_SIZE);
+      setSize(target);
+      return target >= 0.99 ? "Now life size" : `Now 1:${Math.round(1 / target)}`;
+    }
+    if (typeof change.factor === "number") {
+      resize(change.factor);
+      return change.factor >= 1 ? "Bigger" : "Smaller";
+    }
+    return null;
+  }, [resize]);
+
+  // A voice edit regenerates the layout and every plant id with it, so a
+  // details panel left open would be describing a plant that no longer exists.
+  useEffect(() => {
+    setSelected((current) =>
+      current && layout.plants.some((plant) => plant.id === current.id) ? current : null,
+    );
+  }, [layout]);
+
   return (
     <div ref={setOverlay} className="relative h-[80vh] w-full overflow-hidden rounded-card bg-black">
       <ARWorldCanvas
@@ -95,6 +125,14 @@ export function ARWorldScreen({
         {selected ? (
           <div className="pointer-events-auto mx-auto max-w-sm">
             <PlantDetailsPanel plant={selected} onClose={() => setSelected(null)} />
+          </div>
+        ) : null}
+
+        {/* Voice editing, once there is a garden on the floor to edit. Same
+            pipeline as the planner and the preview view. */}
+        {placement.placed ? (
+          <div className="pointer-events-none flex justify-center">
+            <ARVoiceControl onScale={applyVoiceScale} />
           </div>
         ) : null}
 

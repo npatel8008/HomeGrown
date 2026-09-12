@@ -94,8 +94,8 @@ Audio goes to **ElevenLabs Scribe** for transcription
 planner — voice changes the *inputs*, it never invents plant positions, so a
 spoken edit produces exactly what clicking the same change would.
 
-The same control is in the AR view, so you can change the garden while looking
-at it through the camera — confirmations appear as captions, never spoken. In
+The same control is in both AR views — the world-tracked WebXR one and the
+preview — so you can change the garden while looking at it through the camera — confirmations appear as captions, never spoken. In
 AR the garden is also resized by pinching, or by saying *"make it bigger"*,
 *"make it smaller"* or *"make it life size"*; those commands change how it is
 drawn and never touch what is planted.

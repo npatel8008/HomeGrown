@@ -120,6 +120,12 @@ browser. Nothing below has run on real hardware.
   how far the garden creeps; "Move here" is the escape hatch.
 - **Does it hold still?** The real test: place it, walk around it, turn away and
   back. It should stay where you put it.
+- **The mic inside a WebXR session.** Voice is now in the world-tracked screen
+  as well as the preview. The unknown is whether Chrome will show a microphone
+  permission prompt while an immersive session with `dom-overlay` is running —
+  if it silently refuses, the control reports the mic as unavailable and the
+  way out is the garden plan page. Grant microphone access once before entering
+  AR and it should not come up again.
 - **Pinch to resize.** Two fingers on a real touchscreen, which is the one
   gesture that cannot be simulated honestly on a desktop. Confirm pinching does
   not also swing the view, that it survives lifting one finger before the other,
