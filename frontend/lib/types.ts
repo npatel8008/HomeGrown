@@ -304,3 +304,93 @@ export interface CareRecommendationsResponse {
   counts: Record<string, number>;
   generated_by: string;
 }
+
+/* ------------------------------------------------------------------ */
+/* Per-account storage — mirrors the MongoDB-backed models in          */
+/* backend/models/schemas.py. Served under /api/me/*, which requires   */
+/* an Auth0 session. None of these carries a user id: ownership comes  */
+/* from the verified token, never from the request body.               */
+/* ------------------------------------------------------------------ */
+
+export type CareEventKind =
+  | "watered"
+  | "fertilized"
+  | "pruned"
+  | "weeded"
+  | "pest-treated"
+  | "harvested"
+  | "note";
+
+export type PlantingStatus =
+  | "planned"
+  | "planted"
+  | "growing"
+  | "harvesting"
+  | "finished"
+  | "removed";
+
+export interface SavedGarden {
+  name: string;
+  plot: PlotSpec | null;
+  garden_type: GardenType | null;
+  location: string | null;
+  zip_code: string | null;
+  season_start: string | null;
+  selected_crop_ids: string[];
+  layout: GenerateLayoutResponse | null;
+  recommendations: RecommendCropsResponse | null;
+}
+
+export interface SavedGardenOut extends SavedGarden {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Planting {
+  plant_id: string;
+  crop_id: string;
+  crop: string;
+  planted_on?: string | null;
+  status: PlantingStatus;
+  notes?: string | null;
+}
+
+export interface PlantingOut extends Planting {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CareEvent {
+  kind: CareEventKind;
+  crop_id?: string | null;
+  crop?: string | null;
+  plant_id?: string | null;
+  occurred_at?: string | null;
+  note?: string | null;
+  quantity_lbs?: number | null;
+  value_usd?: number | null;
+  task_id?: string | null;
+}
+
+export interface CareEventOut extends CareEvent {
+  id: string;
+  created_at?: string;
+}
+
+export interface CropCareState {
+  crop_id: string;
+  crop: string | null;
+  last_watered: string | null;
+  last_fertilized: string | null;
+  harvested_lbs: number;
+  harvested_value_usd: number;
+  event_count: number;
+}
+
+export interface CareSummaryResponse {
+  crops: CropCareState[];
+  total_harvested_lbs: number;
+  total_harvested_value_usd: number;
+}

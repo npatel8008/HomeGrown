@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppNav } from "@/components/layout/AppNav";
 import { Footer } from "@/components/layout/Footer";
+import { GardenSync } from "@/components/garden/GardenSync";
 import { getSessionUser, isAuth0Configured } from "@/lib/auth0";
 import { GardenStoreProvider } from "@/lib/store";
 
@@ -22,6 +23,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className="min-h-screen">
         <GardenStoreProvider>
+          {/* Keeps the signed-in account's saved garden in step. Renders
+              nothing, and no-ops when signed out. */}
+          <GardenSync />
           <AppNav authEnabled={authEnabled} user={user} />
           <main className="pb-10">{children}</main>
           <Footer />

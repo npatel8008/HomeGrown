@@ -4,8 +4,9 @@ These mirror `frontend/lib/types.ts` one-for-one. If you change a field here,
 change it there too — there is no codegen step in the scaffold.
 """
 
+from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -337,3 +338,122 @@ class CareRecommendationsResponse(BaseModel):
     tasks: List[CareTask]
     counts: Dict[str, int]
     generated_by: str = "mock-care-engine-v0"
+
+
+# ---------------------------------------------------------------------------
+# Per-user persistence (MongoDB) — everything below is scoped to the caller's
+# verified Auth0 subject. None of these models carries a user id: ownership is
+# taken from the access token, never from the request body.
+# ---------------------------------------------------------------------------
+
+class CareEventKind(str, Enum):
+    WATERED = "watered"
+    FERTILIZED = "fertilized"
+    PRUNED = "pruned"
+    WEEDED = "weeded"
+    PEST_TREATED = "pest-treated"
+    HARVESTED = "harvested"
+    NOTE = "note"
+
+
+class PlantingStatus(str, Enum):
+    PLANNED = "planned"
+    PLANTED = "planted"
+    GROWING = "growing"
+    HARVESTING = "harvesting"
+    FINISHED = "finished"
+    REMOVED = "removed"
+
+
+class SavedGarden(BaseModel):
+    """The plan a user's care history hangs off.
+
+    `layout` and `recommendations` are stored as opaque blobs: they are already
+    typed by GenerateLayoutResponse / RecommendCropsResponse on the way in, and
+    keeping them loose here means a change to the layout contract doesn't
+    require a migration of saved documents mid-hackathon.
+    """
+
+    name: str = "My garden"
+    plot: Optional[PlotSpec] = None
+    garden_type: Optional[GardenType] = None
+    location: Optional[str] = None
+    zip_code: Optional[str] = None
+    season_start: Optional[datetime] = None
+    selected_crop_ids: List[str] = Field(default_factory=list)
+    layout: Optional[Dict[str, Any]] = None
+    recommendations: Optional[Dict[str, Any]] = None
+
+
+class SavedGardenOut(SavedGarden):
+    id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class Planting(BaseModel):
+    """One plant in the ground, tracked over the season."""
+
+    plant_id: str = Field(..., description="Matches PlacedPlant.id from the layout")
+    crop_id: str
+    crop: str
+    planted_on: Optional[datetime] = None
+    status: PlantingStatus = PlantingStatus.PLANTED
+    notes: Optional[str] = None
+
+
+class PlantingOut(Planting):
+    id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class PlantingPatch(BaseModel):
+    status: Optional[PlantingStatus] = None
+    planted_on: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class UpsertPlantingsRequest(BaseModel):
+    plantings: List[Planting]
+
+
+class CareEvent(BaseModel):
+    """A thing the gardener actually did (or observed)."""
+
+    kind: CareEventKind
+    crop_id: Optional[str] = None
+    crop: Optional[str] = None
+    plant_id: Optional[str] = None
+    occurred_at: Optional[datetime] = None
+    note: Optional[str] = None
+    #: Harvest only.
+    quantity_lbs: Optional[float] = Field(default=None, ge=0)
+    value_usd: Optional[float] = Field(default=None, ge=0)
+    #: The care-engine task this completes, when it came from the Today list.
+    task_id: Optional[str] = None
+
+
+class CareEventOut(CareEvent):
+    id: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class CropCareState(BaseModel):
+    crop_id: str
+    crop: Optional[str] = None
+    last_watered: Optional[datetime] = None
+    last_fertilized: Optional[datetime] = None
+    harvested_lbs: float = 0
+    harvested_value_usd: float = 0
+    event_count: int = 0
+
+
+class CareSummaryResponse(BaseModel):
+    crops: List[CropCareState] = Field(default_factory=list)
+    total_harvested_lbs: float = 0
+    total_harvested_value_usd: float = 0
+
+
+class DeleteResult(BaseModel):
+    deleted: Dict[str, int]

@@ -59,6 +59,8 @@ GardenAi/
 │   │   ├── climate.py           (frost dates, GDD, live forecast)
 │   │   ├── llm_client.py        (IFM/K2 API client, retries + fallback)
 │   │   └── crop_repository.py   (data access — swap for Supabase)
+│   │   ├── auth.py              (verifies Auth0 / internal tokens → user id)
+│   │   ├── user_store.py        (MongoDB, every query scoped to that user id)
 │   ├── models/schemas.py     Pydantic request/response contracts
 │   ├── data/crops.json       10-crop demo dataset
 │   └── scripts/capture_fallback.py  Refreshes the frontend's offline data
@@ -68,6 +70,17 @@ GardenAi/
     ├── components/           Grouped by feature area
     └── lib/                  types.ts, api.ts, store.tsx, demo.ts, fallback.json
 ```
+
+### Accounts and per-user data
+
+Auth0 handles sign-in; MongoDB stores each account's garden, plantings and care
+record under `/api/me/*`. The backend takes the user id from a verified token
+and never from the request, so one account cannot read or write another's data
+— see **[docs/ACCOUNTS_AND_STORAGE.md](docs/ACCOUNTS_AND_STORAGE.md)** for the
+security model, the setup, and what the 30 isolation tests do and do not cover.
+
+Both are optional: with neither configured the app runs exactly as before, on
+localStorage, and says so.
 
 ### The four systems, and why they're separate
 

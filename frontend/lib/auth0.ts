@@ -23,6 +23,12 @@ export function getAuth0Client(): Auth0Client {
       signInReturnToPath: "/",
       authorizationParameters: {
         scope: "openid profile email",
+        // Only when an API is registered in Auth0. Without it the tenant issues
+        // an opaque access token, which the FastAPI backend cannot verify — see
+        // lib/backend-token.ts for the fallback that covers that case.
+        ...(process.env.AUTH0_API_AUDIENCE
+          ? { audience: process.env.AUTH0_API_AUDIENCE }
+          : {}),
       },
     });
   }

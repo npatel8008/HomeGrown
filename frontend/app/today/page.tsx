@@ -7,8 +7,15 @@ import { getCareRecommendations, getGardenStatus } from "@/lib/api";
 import { DEMO_SEASON_DAY } from "@/lib/demo";
 import { usd } from "@/lib/format";
 import { derivePlantings, useGardenStore } from "@/lib/store";
-import type { CareRecommendationsResponse, GardenStatusResponse, TaskCategory } from "@/lib/types";
+import { careEventForTask, useCareData } from "@/lib/use-care-data";
+import type {
+  CareRecommendationsResponse,
+  CareTask,
+  GardenStatusResponse,
+  TaskCategory,
+} from "@/lib/types";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { CareRecordCard } from "@/components/today/CareRecordCard";
 import { GardenTaskCard } from "@/components/today/GardenTaskCard";
 import { WeatherCard } from "@/components/today/WeatherCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -28,6 +35,7 @@ export default function TodayPage() {
   const [care, setCare] = useState<CareRecommendationsResponse | null>(null);
   const [notice, setNotice] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const care_ = useCareData();
 
   const location = state.space.location;
   const zipCode = state.space.zip_code;
@@ -54,6 +62,14 @@ export default function TodayPage() {
     if (!hydrated) return;
     void load();
   }, [hydrated, load]);
+
+  // Only offer "mark done" when there is an account to record it against.
+  const completeTask =
+    care_.state === "ok"
+      ? async (task: CareTask) => {
+          await care_.log(careEventForTask(task));
+        }
+      : undefined;
 
   const progress = status?.progress;
   const seasonPct = progress
@@ -120,6 +136,8 @@ export default function TodayPage() {
             </section>
           ) : null}
 
+          <CareRecordCard summary={care_.summary} state={care_.state} />
+
           {!state.recommendations ? (
             <div className="card-quiet p-5 text-sm text-ink-muted">
               <p className="mb-3">
@@ -150,7 +168,7 @@ export default function TodayPage() {
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {tasks.map((task) => (
-                        <GardenTaskCard key={task.id} task={task} />
+                        <GardenTaskCard key={task.id} task={task} onComplete={completeTask} />
                       ))}
                     </div>
                   </section>

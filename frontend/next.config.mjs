@@ -16,8 +16,14 @@ const nextConfig = {
   //
   // Proxying instead keeps everything same-origin, so one tunnel is enough and
   // NEXT_PUBLIC_API_URL can stay empty (see .env.local).
+  // NOTE the exclusion: /api/me/* must NOT be rewritten. Those endpoints carry
+  // per-account data and are served by app/api/me/[...path]/route.ts, which
+  // checks the Auth0 session and attaches a token the backend can verify.
+  // Rewriting them would hand the backend an anonymous request.
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${BACKEND_ORIGIN}/api/:path*` }];
+    return [
+      { source: "/api/:path((?!me/).*)", destination: `${BACKEND_ORIGIN}/api/:path` },
+    ];
   },
 };
 
