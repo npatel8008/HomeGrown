@@ -8,6 +8,25 @@ import { SparkIcon } from "./Icons";
  * truth — if an LLM call failed and the deterministic fallback ran, this says
  * so. A demo should never claim to be AI-powered when it quietly wasn't.
  */
+/** Model ids are for logs; these are for people. */
+const MODEL_NAMES: Record<string, string> = {
+  "IFM/K2-Think-v2": "K2 Think",
+  "IFM/K2-Horizon-375B-A23B": "K2 Horizon",
+};
+
+/**
+ * Which model ran is not fixed: if one stops responding the backend fails over
+ * to the other, and a per-meal split can land on both, arriving here as "a + b".
+ * Name whichever actually answered rather than assuming the usual one.
+ */
+function modelName(generatedBy: string): string {
+  return generatedBy
+    .split("+")
+    .map((part) => part.trim())
+    .map((part) => MODEL_NAMES[part] ?? part)
+    .join(" + ");
+}
+
 export function EngineBadge({
   generatedBy,
   className,
@@ -21,9 +40,13 @@ export function EngineBadge({
   const hasLlmPass = generatedBy.includes("+llm");
   const live = isLive || hasLlmPass;
 
-  const label = live
-    ? generatedBy.replace("mock-crop-scoring-v0+llm-reasons", "IFM/K2-Think-v2")
-    : "built-in heuristic";
+  // Crop scoring reports its LLM pass without naming the model, and the model
+  // that ran is no longer predictable, so credit K2 without inventing which.
+  const label = !live
+    ? "built-in heuristic"
+    : hasLlmPass && !isLive
+      ? "K2"
+      : modelName(generatedBy);
 
   return (
     <span
