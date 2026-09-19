@@ -31,6 +31,8 @@ import json
 import logging
 import os
 import re
+import socket
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -63,8 +65,56 @@ def is_available() -> bool:
     return api_key() is not None
 
 
+# A model that just failed to answer will almost certainly not answer the next
+# request either, and each rediscovery costs a full timeout. Remember it briefly
+# so the requests behind it fail over immediately instead of queueing behind the
+# same silence. Short enough that a model coming back is picked up quickly.
+UNREACHABLE_COOLDOWN_SECONDS = float(os.getenv("IFM_UNREACHABLE_COOLDOWN", "120"))
+
+_unreachable_until: Dict[str, float] = {}
+_unreachable_lock = threading.Lock()
+
+
+def _mark_unreachable(model: str) -> None:
+    with _unreachable_lock:
+        _unreachable_until[model] = time.monotonic() + UNREACHABLE_COOLDOWN_SECONDS
+
+
+def _is_unreachable(model: str) -> bool:
+    with _unreachable_lock:
+        until = _unreachable_until.get(model)
+        if until is None:
+            return False
+        if time.monotonic() >= until:
+            del _unreachable_until[model]
+            return False
+        return True
+
+
+def _clear_unreachable(model: str) -> None:
+    """It answered — stop skipping it."""
+    with _unreachable_lock:
+        _unreachable_until.pop(model, None)
+
+
+def reset_unreachable() -> None:
+    """Forget every cooldown. For tests, and for /api/health to probe honestly."""
+    with _unreachable_lock:
+        _unreachable_until.clear()
+
+
 class LLMError(RuntimeError):
     pass
+
+
+class LLMTimeout(LLMError):
+    """The endpoint accepted the connection and then did not answer in time.
+
+    Worth separating from every other failure, because it says the provider is
+    unreachable rather than unhappy with the question. Asking again -- or asking
+    a smaller question -- gets the same silence, so callers should stop rather
+    than spend their remaining budget on it.
+    """
 
 
 def complete(
@@ -73,8 +123,14 @@ def complete(
     temperature: float = 0.2,
     max_tokens: Optional[int] = None,
     json_mode: bool = False,
+    timeout: Optional[float] = None,
 ) -> str:
-    """Raw completion. Raises LLMError on any failure."""
+    """Raw completion. Raises LLMError on any failure.
+
+    `timeout` bounds this one call. Callers working to a deadline of their own
+    pass what they can still afford to wait, so a provider that accepts the
+    connection and then never answers costs them that much and no more.
+    """
     key = api_key()
     if not key:
         raise LLMError("IFM_API_KEY is not set")
@@ -100,12 +156,18 @@ def complete(
 
     started = time.time()
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(request, timeout=timeout or TIMEOUT_SECONDS) as response:
             body = json.load(response)
     except urllib.error.HTTPError as error:
         detail = error.read()[:400].decode("utf-8", "replace")
         raise LLMError("HTTP %s from %s: %s" % (error.code, BASE_URL, detail))
-    except Exception as error:  # timeout, DNS, connection reset, bad JSON
+    except socket.timeout as error:
+        raise LLMTimeout("no response within %.0fs" % (timeout or TIMEOUT_SECONDS))
+    except urllib.error.URLError as error:
+        if isinstance(error.reason, socket.timeout):
+            raise LLMTimeout("no response within %.0fs" % (timeout or TIMEOUT_SECONDS))
+        raise LLMError("%s: %s" % (type(error).__name__, error))
+    except Exception as error:  # DNS, connection reset, bad JSON
         raise LLMError("%s: %s" % (type(error).__name__, error))
 
     try:
@@ -209,6 +271,10 @@ def complete_json(
     temperature: float = 0.2,
     max_tokens: Optional[int] = None,
     max_attempts: Optional[int] = None,
+    timeout: Optional[float] = None,
+    failures: Optional[List[LLMError]] = None,
+    fallback_model: Optional[str] = None,
+    used: Optional[List[str]] = None,
 ) -> Optional[dict]:
     """Completion that must parse as a JSON object. Returns None on any failure.
 
@@ -223,26 +289,72 @@ def complete_json(
     spend the saved timeout on that instead.
     """
     attempts = max_attempts or MAX_ATTEMPTS
-    for attempt in range(1, attempts + 1):
-        payload = list(messages) if attempt == 1 else list(messages) + [_NUDGE]
-        try:
-            raw = complete(
-                payload,
-                model=model or MODEL_STRUCTURED,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                json_mode=True,
+    primary = model or MODEL_STRUCTURED
+
+    # A model can be unreachable while the rest of the provider is perfectly
+    # healthy — we have watched K2-Think-v2 hang on a one-token request while
+    # the gateway returned 200s, auth returned 401s, and K2-Horizon answered in
+    # 1.5s. That is one stuck deployment, not an outage, so try the other model
+    # before giving up on a whole request.
+    candidates = [primary]
+    if fallback_model and fallback_model != primary:
+        candidates.append(fallback_model)
+
+    # Skip models known to be silent right now. If that would leave nothing to
+    # ask, keep the original order anyway: one request paying the timeout is how
+    # we find out the model is back.
+    reachable = [name for name in candidates if not _is_unreachable(name)]
+    if reachable and len(reachable) < len(candidates):
+        logger.info("Skipping models in cooldown: %s", set(candidates) - set(reachable))
+    candidates = reachable or candidates
+
+    made = 0
+    for index, candidate in enumerate(candidates):
+        if index:
+            logger.warning("Failing over from %s to %s", primary, candidate)
+        for attempt in range(1, attempts + 1):
+            made += 1
+            payload = list(messages) if attempt == 1 else list(messages) + [_NUDGE]
+            try:
+                raw = complete(
+                    payload,
+                    model=candidate,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    json_mode=True,
+                    timeout=timeout,
+                )
+            except LLMError as error:
+                logger.warning(
+                    "LLM %s attempt %d/%d failed: %s", candidate, attempt, attempts, error
+                )
+                if failures is not None:
+                    failures.append(error)
+                if isinstance(error, LLMTimeout):
+                    # It never answered. Retrying is the same question to the
+                    # same silent endpoint, and costs another full timeout to
+                    # learn that. Move to the next model instead.
+                    logger.warning("%s is not responding; not retrying it", candidate)
+                    _mark_unreachable(candidate)
+                    break
+                continue
+
+            parsed = extract_json_object(raw)
+            if parsed is not None:
+                _clear_unreachable(candidate)
+                # Name the model that actually answered, not the one we asked
+                # first. The UI shows this, and it must never credit a model
+                # that was silent for work another one did.
+                if used is not None:
+                    used.append(candidate)
+                return parsed
+            logger.warning(
+                "LLM %s attempt %d/%d returned unparseable JSON: %s",
+                candidate,
+                attempt,
+                attempts,
+                raw[:200],
             )
-        except LLMError as error:
-            logger.warning("LLM attempt %d/%d failed: %s", attempt, attempts, error)
-            continue
 
-        parsed = extract_json_object(raw)
-        if parsed is not None:
-            return parsed
-        logger.warning(
-            "LLM attempt %d/%d returned unparseable JSON: %s", attempt, attempts, raw[:200]
-        )
-
-    logger.warning("LLM gave up after %d attempt(s)", attempts)
+    logger.warning("LLM gave up after %d attempt(s)", made)
     return None

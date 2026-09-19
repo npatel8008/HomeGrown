@@ -92,6 +92,10 @@ def write_reasons(
         ],
         model=llm_client.MODEL_STRUCTURED,
         temperature=0.4,
+        # Reasons are optional prose, but a silent model still costs a full
+        # timeout per request and this runs inside the same 60s the frontend
+        # gives the whole recommendations call.
+        fallback_model=llm_client.MODEL_PROSE,
     )
     if not payload:
         return None

@@ -280,6 +280,7 @@ def _parse_with_llm(transcript: str, crop_ids: List[str]) -> Optional[List[Dict[
             },
         ],
         temperature=0.1,
+        fallback_model=llm_client.MODEL_PROSE,
     )
     if not payload:
         return None

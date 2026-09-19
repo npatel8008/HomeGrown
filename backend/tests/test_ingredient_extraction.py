@@ -57,6 +57,14 @@ class FakeLLM:
         return self.answers[named[0]]
 
 
+@pytest.fixture(autouse=True)
+def _no_cooldown_leaks():
+    """A model marked unreachable in one test must not affect the next."""
+    llm_client.reset_unreachable()
+    yield
+    llm_client.reset_unreachable()
+
+
 @pytest.fixture
 def live_llm(monkeypatch):
     """Make the module think a model is configured, without one being."""
@@ -184,3 +192,121 @@ def test_total_model_failure_still_returns_a_profile(live_llm):
 
     assert result.source == "mock-keyword-matcher"
     assert result.ingredients  # never empty — the demo must not show a blank page
+
+
+# --- when the provider does not answer at all -------------------------------
+#
+# Distinct from a budget overrun, and the remedy is the opposite. An overrun
+# means the model answered too slowly, so a smaller question helps. Silence
+# means it did not answer, so every further question costs a full timeout and
+# buys nothing. Getting this wrong cost 100s of spinner against a frontend that
+# gives up at 60s, which the user sees as "offline demo mode".
+
+
+class HangingLLM:
+    """Every call times out, the way an unresponsive endpoint behaves."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, messages, failures=None, **kwargs):
+        self.calls += 1
+        if failures is not None:
+            failures.append(llm_client.LLMTimeout("no response within 20s"))
+        return None
+
+
+def test_an_unresponsive_endpoint_is_not_asked_twice(live_llm, monkeypatch):
+    hanging = HangingLLM()
+    monkeypatch.setattr(llm_client, "complete_json", hanging)
+    monkeypatch.setattr(ie, "PER_MEAL_STAGGER_SECONDS", 0)
+
+    result = ie.extract_ingredients(AnalyzeFoodRequest(household_size=4, meals=BORSCHT_WEEK))
+
+    assert result.source == "mock-keyword-matcher"
+    # One combined call and no per-meal split: four more timeouts would have
+    # blown the frontend's budget to learn what the first one already said.
+    assert hanging.calls == 1
+
+
+def test_a_budget_overrun_still_splits(live_llm):
+    """The overrun path must not be collateral damage of the timeout fix."""
+    fake = live_llm(
+        FakeLLM(
+            # Both meals present, so the combined prompt matches two names and
+            # is answered by `combined` -- None here, but without a timeout.
+            {"Tacos": rows(("Tomato", 100)), "Pasta": rows(("Basil", 100))},
+            combined=None,
+        )
+    )
+    result = ie.extract_ingredients(
+        AnalyzeFoodRequest(
+            household_size=4,
+            meals=[Meal(name="Tacos", times_per_week=2), Meal(name="Pasta", times_per_week=1)],
+        )
+    )
+
+    assert result.source == llm_client.MODEL_STRUCTURED
+    assert len(fake.prompts) > 1
+
+
+def test_extraction_cannot_outrun_the_frontend_timeout():
+    """The budget must stay under the 60s the frontend waits."""
+    assert ie.EXTRACTION_BUDGET_SECONDS < 60
+
+
+# --- failing over to the model that is actually up --------------------------
+#
+# One model can be unreachable while the provider is otherwise healthy: we have
+# watched K2-Think-v2 hang on a one-token request while the gateway returned
+# 200s, auth returned 401s, and K2-Horizon answered in 1.5s. Falling back to the
+# keyword matcher in that situation throws away a perfectly good model.
+
+
+class OneModelDown:
+    """`down` never answers; every other model answers normally."""
+
+    def __init__(self, down: str, reply: dict):
+        self.down = down
+        self.reply = reply
+        self.asked: List[str] = []
+
+    def __call__(self, messages, model=None, fallback_model=None, failures=None,
+                 used=None, **kwargs):
+        for candidate in [model, fallback_model]:
+            if candidate is None:
+                continue
+            self.asked.append(candidate)
+            if candidate == self.down:
+                if failures is not None:
+                    failures.append(llm_client.LLMTimeout("no response within 20s"))
+                continue
+            if used is not None:
+                used.append(candidate)
+            return self.reply
+        return None
+
+
+def test_a_silent_model_fails_over_to_one_that_answers(live_llm, monkeypatch):
+    stub = OneModelDown(llm_client.MODEL_STRUCTURED, rows(("Tomato", 100), ("Basil", 60)))
+    monkeypatch.setattr(llm_client, "complete_json", stub)
+
+    result = ie.extract_ingredients(
+        AnalyzeFoodRequest(household_size=3, meals=[Meal(name="Pasta", times_per_week=2)])
+    )
+
+    assert [item.ingredient for item in result.ingredients] == ["Tomato", "Basil"]
+    assert llm_client.MODEL_PROSE in stub.asked
+
+
+def test_the_answering_model_gets_the_credit(live_llm, monkeypatch):
+    """The UI shows this label; it must not credit a model that was silent."""
+    stub = OneModelDown(llm_client.MODEL_STRUCTURED, rows(("Tomato", 100)))
+    monkeypatch.setattr(llm_client, "complete_json", stub)
+
+    result = ie.extract_ingredients(
+        AnalyzeFoodRequest(household_size=3, meals=[Meal(name="Pasta", times_per_week=2)])
+    )
+
+    assert result.source == llm_client.MODEL_PROSE
+    assert result.source != llm_client.MODEL_STRUCTURED

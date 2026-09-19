@@ -16,10 +16,11 @@ or cares which one ran.
 """
 
 import logging
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
 from models.schemas import AnalyzeFoodRequest, ExtractedIngredient
 from services import llm_client
@@ -310,26 +311,86 @@ def _coerce_ingredient(row: object) -> Optional[ExtractedIngredient]:
 MAX_PER_MEAL_CALLS = 8
 PER_MEAL_STAGGER_SECONDS = 0.4
 
+# All of extraction must finish inside this, because the frontend gives up at
+# 60s and shows the bundled demo profile instead.
+#
+# It matters most when a model is not erroring but hanging: it accepts the
+# connection and never answers, so every attempt costs its full timeout rather
+# than failing fast. Combined (2 attempts) plus a per-meal split (2 more each)
+# is 100s of waiting for an answer that never comes, and the user sees "offline
+# demo mode" after two minutes of spinner when an honest fallback was available
+# in seconds. Budget the wait so that cannot happen.
+EXTRACTION_BUDGET_SECONDS = float(os.getenv("EXTRACTION_BUDGET", "40"))
+
+# Below this there is no point starting another call.
+_MIN_USEFUL_TIMEOUT_SECONDS = 4.0
+
 # Beyond this many meals the combined call is the one that tends to run away, so
 # spend the timeout budget on the per-meal split instead of an identical retry.
 _SPLIT_PRONE_MEAL_COUNT = 3
 
 
-def _extract_with_llm(request: AnalyzeFoodRequest) -> Optional[List[ExtractedIngredient]]:
-    """Returns None if the model is unavailable or its answer is unusable."""
+class _Unreachable(Exception):
+    """Every model we asked stayed silent. Stop; do not ask them more."""
+
+
+#: Rows the model returned, paired with the model that actually returned them.
+Answer = Tuple[List[object], str]
+
+
+def _extract_with_llm(
+    request: AnalyzeFoodRequest,
+) -> Optional[Tuple[List[ExtractedIngredient], str]]:
+    """Ingredients plus the model that produced them, or None if unusable."""
+    deadline = time.monotonic() + EXTRACTION_BUDGET_SECONDS
+
     attempts = 1 if len(request.meals) >= _SPLIT_PRONE_MEAL_COUNT else None
-    rows = _ask_combined(request, max_attempts=attempts)
-    if rows is None and len(request.meals) > 1:
-        logger.info("Combined extraction failed; asking per meal")
-        rows = _ask_per_meal(request)
-    if rows is None:
+    try:
+        answer = _ask_combined(request, max_attempts=attempts, deadline=deadline)
+    except _Unreachable:
+        # Splitting only helps a model that answers too slowly. One that does
+        # not answer at all gives the same silence per meal, so go to the
+        # matcher now rather than after four more timeouts.
+        logger.warning("No model responded; using keyword extraction")
         return None
-    return _rows_to_ingredients(rows)
+
+    if answer is None and len(request.meals) > 1:
+        if _remaining(deadline) < _MIN_USEFUL_TIMEOUT_SECONDS:
+            logger.warning("No budget left for a per-meal split; falling back now")
+            return None
+        logger.info("Combined extraction failed; asking per meal")
+        answer = _ask_per_meal(request, deadline=deadline)
+
+    if answer is None:
+        return None
+    rows, model = answer
+    ingredients = _rows_to_ingredients(rows)
+    if ingredients is None:
+        return None
+    return ingredients, model
+
+
+def _remaining(deadline: Optional[float]) -> float:
+    if deadline is None:
+        return llm_client.TIMEOUT_SECONDS
+    return max(0.0, deadline - time.monotonic())
+
+
+def _call_timeout(deadline: Optional[float], attempts: int) -> Optional[float]:
+    """Split what is left of the budget across the attempts still to come."""
+    if deadline is None:
+        return None
+    return max(_MIN_USEFUL_TIMEOUT_SECONDS, _remaining(deadline) / max(attempts, 1))
 
 
 def _ask_combined(
-    request: AnalyzeFoodRequest, max_attempts: Optional[int] = None
-) -> Optional[List[object]]:
+    request: AnalyzeFoodRequest,
+    max_attempts: Optional[int] = None,
+    deadline: Optional[float] = None,
+) -> Optional[Answer]:
+    attempts = max_attempts or llm_client.MAX_ATTEMPTS
+    failures: List[llm_client.LLMError] = []
+    used: List[str] = []
     payload = llm_client.complete_json(
         [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -338,17 +399,27 @@ def _ask_combined(
         model=llm_client.MODEL_STRUCTURED,
         temperature=0.1,
         max_attempts=max_attempts,
+        timeout=_call_timeout(deadline, attempts),
+        failures=failures,
+        fallback_model=llm_client.MODEL_PROSE,
+        used=used,
     )
     if not payload:
+        if failures and all(isinstance(err, llm_client.LLMTimeout) for err in failures):
+            raise _Unreachable()
         return None
     rows = payload.get("ingredients")
     if not isinstance(rows, list):
         logger.warning("LLM response had no 'ingredients' list")
         return None
-    return rows
+    # Credit the model that answered, which after a failover is not the one we
+    # asked first. The UI shows this label and must never misattribute work.
+    return rows, (used[0] if used else llm_client.MODEL_STRUCTURED)
 
 
-def _ask_per_meal(request: AnalyzeFoodRequest) -> Optional[List[object]]:
+def _ask_per_meal(
+    request: AnalyzeFoodRequest, deadline: Optional[float] = None
+) -> Optional[Answer]:
     """One call per meal, in parallel, merged into a single weighted list.
 
     Each call scores its own meal's ingredients 0-100 relative to that meal
@@ -371,17 +442,23 @@ def _ask_per_meal(request: AnalyzeFoodRequest) -> Optional[List[object]]:
             meals=[meal],
             free_text=request.free_text if index == 0 else "",
         )
-        return meal, _ask_combined(single)
+        try:
+            return meal, _ask_combined(single, deadline=deadline)
+        except _Unreachable:
+            return meal, None
 
     with ThreadPoolExecutor(max_workers=len(meals)) as pool:
         answers = list(pool.map(ask, enumerate(meals)))
 
     # ingredient name -> [summed weight, first row seen]
     merged: Dict[str, List[object]] = {}
-    for meal, rows in answers:
-        if not rows:
+    models: List[str] = []
+    for meal, answer in answers:
+        if not answer:
             logger.info("Per-meal extraction failed for %r", meal.name)
             continue
+        rows, model = answer
+        models.append(model)
         for row in rows:
             item = _coerce_ingredient(row)
             if item is None or item.weekly_usage_score <= 0:
@@ -398,10 +475,14 @@ def _ask_per_meal(request: AnalyzeFoodRequest) -> Optional[List[object]]:
 
     top = max(entry[0] for entry in merged.values()) or 1.0
     logger.info("Per-meal extraction merged %d ingredients", len(merged))
-    return [
+    rows = [
         {"ingredient": name, "weekly_usage_score": int(round(weight / top * 100))}
         for weight, name in sorted(merged.values(), key=lambda e: -e[0])
     ]
+    # Meals can land on different models if one fails over mid-split; name them
+    # all rather than picking a winner.
+    distinct = list(dict.fromkeys(models))
+    return rows, (" + ".join(distinct) if distinct else llm_client.MODEL_STRUCTURED)
 
 
 def _rows_to_ingredients(rows: List[object]) -> Optional[List[ExtractedIngredient]]:
@@ -459,6 +540,7 @@ def extract_ingredients(request: AnalyzeFoodRequest) -> ExtractionResult:
     if llm_client.is_available():
         extracted = _extract_with_llm(request)
         if extracted:
-            return ExtractionResult(extracted, llm_client.MODEL_STRUCTURED)
+            ingredients, model = extracted
+            return ExtractionResult(ingredients, model)
         logger.info("Falling back to keyword ingredient extraction")
     return ExtractionResult(_extract_with_keywords(request), "mock-keyword-matcher")
